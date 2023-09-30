@@ -1,7 +1,7 @@
 # cloudgrep #
 cloudgrep searches cloud storage.
 
-![ci](https://github.com/cado-security/varc/actions/workflows/app-ci.yml/badge.svg?branch=main)
+![ci](https://github.com/cado-security/cloudgrep/actions/workflows/app-ci.yml/badge.svg?branch=main)
 
 It currently supports searching log files, optionally compressed with gzip (.gz) or zip (.zip), in AWS S3.
 
