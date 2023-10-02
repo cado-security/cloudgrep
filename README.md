@@ -11,7 +11,7 @@ It currently supports searching log files, optionally compressed with gzip (.gz)
 - Directly searching cloud storage, without indexing logs into a SIEM or Log Analysis tool, can be faster and cheaper.
 - There is no need to wait for logs to be ingested, indexed, and made available for searching.
 - It searches files in parallel for speed.
-- If you run this in the same region as the S3 bucket you will avoid data transfer costs.
+- If you run this in the same region using an S3 VPC endpoint as the S3 bucket using a [VPC endpoint for S3](https://awsmadeeasy.com/blog/aws-s3-vpc-endpoint-transfer-cost-reduction/) you can avoid data transfer costs. Do check first!
 - This may be of use when debugging applications, or investigating a security incident.
 
 ### Example ###
@@ -72,7 +72,7 @@ options:
 Install with:
 ``` pip3 install -r requirements.txt ```
 
-You can run this from your local laptop, or from an EC2 instance in the same region as the S3 bucket to avoid egress charges.
+You can run this from your local laptop, or from an EC2 instance in the same region as the S3 bucket with a [VPC endpoint for S3](https://aws.amazon.com/blogs/architecture/overview-of-data-transfer-costs-for-common-architectures/) to avoid egress charges.
 You can authenticate in a [number of ways](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
 If you are running on an EC2, an [Instance Profile](https://devopscube.com/aws-iam-role-instance-profile/) is likely the best choice.
 
