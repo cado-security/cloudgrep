@@ -11,7 +11,7 @@ It currently supports searching log files, optionally compressed with gzip (.gz)
 - Directly searching cloud storage, without indexing logs into a SIEM or Log Analysis tool, can be faster and cheaper.
 - There is no need to wait for logs to be ingested, indexed, and made available for searching.
 - It searches files in parallel for speed.
-- If you run this in the same region using an as the S3 bucket using a [VPC endpoint for S3](https://awsmadeeasy.com/blog/aws-s3-vpc-endpoint-transfer-cost-reduction/) you can avoid data transfer costs. Do check first!
+- If you run this in the same region as the S3 bucket using a [VPC endpoint for S3](https://awsmadeeasy.com/blog/aws-s3-vpc-endpoint-transfer-cost-reduction/) you can avoid data transfer costs. Do check first!
 - This may be of use when debugging applications, or investigating a security incident.
 
 ### Example ###
