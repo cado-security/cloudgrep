@@ -1,8 +1,7 @@
 import boto3
-from azure.storage.blob import BlobServiceClient, BlobPrefix
+from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
-from azure.storage.blob import BlobProperties
 from datetime import timezone, datetime
 from dateutil.parser import parse
 import botocore
@@ -14,7 +13,6 @@ import logging
 import gzip
 import zipfile
 import os
-
 
 class CloudGrep:
     def get_all_strings_line(self, file_path: str) -> List[str]:
@@ -88,7 +86,7 @@ class CloudGrep:
         return matched_count
 
     def download_from_azure(self, account_name: str, container_name: str, files: List[str], query: str, hide_filenames: bool) -> int:
-        """ Dwnload every file in the container from azure
+        """ Download every file in the container from azure
         Returns number of matched files"""
         default_credential = DefaultAzureCredential()
         matched_count = 0
@@ -97,19 +95,26 @@ class CloudGrep:
             credential=default_credential
         )
         container_client = blob_service_client.get_container_client(container_name)
-        for file in files:
+
+        def download_file(key: str) -> None:
             with tempfile.NamedTemporaryFile() as tmp:
-                logging.info(f"Downloading {account_name}/{container_name} {file} to {tmp.name}")
+                logging.info(f"Downloading {account_name}/{container_name} {key} to {tmp.name}")
                 try:
-                    blob_client = container_client.get_blob_client(file)
+                    blob_client = container_client.get_blob_client(key)
                     with open(tmp.name, "wb") as my_blob:
                         blob_data = blob_client.download_blob()
                         blob_data.readinto(my_blob)
-                    matched = self.search_file(tmp.name, file, query, hide_filenames)
+                    matched = self.search_file(tmp.name, key, query, hide_filenames)
                     if matched:
+                        nonlocal matched_count
                         matched_count += 1
                 except ResourceNotFoundError:
-                    logging.info(f"File {file} not found in {account_name}/{container_name}")
+                    logging.info(f"File {key} not found in {account_name}/{container_name}")
+
+        # Use ThreadPoolExecutor to download the files
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(download_file, files)
+
         return matched_count
 
     def filter_object(

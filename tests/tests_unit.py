@@ -7,7 +7,7 @@ import os
 import boto3
 import timeout_decorator
 from moto import mock_s3
-import datetime
+from datetime import datetime
 
 from core.cloudgrep import CloudGrep
 
@@ -53,7 +53,8 @@ class CloudGrepTests(unittest.TestCase):
                 s3.upload_fileobj(data, _BUCKET, file_name)
 
         print("Checking we include every file")
-        matching_keys = list(CloudGrep().get_objects(_BUCKET, "", None, None, None, 0))
+        matching_keys = list(CloudGrep().get_objects(_BUCKET, "", None, None, None, 100000))
+        print(f"Checking we include every file: {matching_keys}")
         assert len(matching_keys) == 3
 
         print(f"Checking we only get one search hit in: {matching_keys}")
@@ -70,7 +71,6 @@ class CloudGrepTests(unittest.TestCase):
         CloudGrep().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
         print("Searched")
 
-    
     def test_object_not_empty_and_size_greater_than_file_size(self):
         # Object is not empty and its size is greater than or equal to the file_size parameter.
         obj = {
@@ -81,7 +81,7 @@ class CloudGrepTests(unittest.TestCase):
         key_contains = "example"
         from_date = datetime(2021, 1, 1)
         to_date = datetime(2023, 1, 1)
-        file_size = 500
+        file_size = 50000
 
         cloud_grep = CloudGrep()
         result = cloud_grep.filter_object_azure(obj, key_contains, from_date, to_date, file_size)
