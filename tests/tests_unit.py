@@ -94,6 +94,6 @@ class CloudGrepTests(unittest.TestCase):
         file_size = 50000
 
         cloud_grep = CloudGrep()
-        result = cloud_grep.filter_object_google(obj, key_contains, from_date, to_date, file_size)
+        result = cloud_grep.filter_object_google(obj, key_contains, from_date, to_date)
 
         self.assertTrue(result)
