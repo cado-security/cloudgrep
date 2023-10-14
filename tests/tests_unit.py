@@ -91,7 +91,6 @@ class CloudGrepTests(unittest.TestCase):
         key_contains = "example"
         from_date = datetime(2021, 1, 1)
         to_date = datetime(2023, 1, 1)
-        file_size = 50000
 
         cloud_grep = CloudGrep()
         result = cloud_grep.filter_object_google(obj, key_contains, from_date, to_date)
