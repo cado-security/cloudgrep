@@ -80,6 +80,6 @@ class CloudGrepTests(unittest.TestCase):
         file_size = 50000
 
         cloud_grep = CloudGrep()
-        result = cloud_grep.filter_object_azure(obj, key_contains, from_date, to_date, file_size) # type: ignore
+        result = cloud_grep.filter_object_azure(obj, key_contains, from_date, to_date, file_size)  # type: ignore
 
         assert result == True
