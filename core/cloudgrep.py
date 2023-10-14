@@ -2,7 +2,7 @@ import boto3
 from azure.storage.blob import BlobServiceClient, BlobProperties
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
-from google.cloud import storage
+from google.cloud import storage # type: ignore
 from datetime import timezone, datetime
 from dateutil.parser import parse
 import botocore
