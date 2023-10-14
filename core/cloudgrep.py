@@ -100,7 +100,7 @@ class CloudGrep:
             return False  # Object was modified before the from_date
         if last_modified and to_date and last_modified > to_date:
             return False  # Object was modified after the to_date
-        if obj["Size"] == 0 and obj["Size"] < file_size:
+        if obj["Size"] == 0 or obj["Size"] > file_size:
             return False  # Object is empty or too large
         if key_contains and key_contains not in obj["Key"]:
             return False  # Object does not contain the key_contains string
@@ -114,8 +114,17 @@ class CloudGrep:
         to_date: Optional[datetime],
         file_size: int,
     ) -> bool:
-        print("blob")
-        print(str(obj))
+        
+        last_modified = obj["last_modified"]
+        if last_modified and from_date and from_date > last_modified:
+            return False  # Object was modified before the from_date
+        if last_modified and to_date and last_modified > to_date:
+            return False  # Object was modified after the to_date
+        if obj["size"] == 0 or obj["size"] > file_size:
+            return False  # Object is empty or too large
+        if key_contains and key_contains not in obj["name"]:
+            return False  # Object does not contain the key_contains string
+        return True
 
     def get_objects(
         self,
@@ -163,7 +172,6 @@ class CloudGrep:
                 end_date,
                 file_size,
             ):
-                print(f"blob: {blob.name}")
                 yield blob.name
 
     def search(
@@ -172,11 +180,11 @@ class CloudGrep:
         account_name: Optional[str],
         container_name: Optional[str],
         query: str,
+        file_size: int,
         prefix: Optional[str] = None,
         key_contains: Optional[str] = None,
         from_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        file_size: int = 100000000,
         hide_filenames: bool = False,
     ) -> None:
         

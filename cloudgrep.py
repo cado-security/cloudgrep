@@ -36,6 +36,7 @@ if __name__ == "__main__":
         "-fs",
         "--file_size",
         help="Optionally filter on Objects smaller than a file size, in bytes. Defaults to 100 Mb. ",
+        default=100000000,
         required=False,
     )
     parser.add_argument("-d", "--debug", help="Enable Debug logging. ", action="store_true", required=False)
@@ -52,10 +53,10 @@ if __name__ == "__main__":
         args["account_name"],
         args["container_name"],
         args["query"],
+        args["file_size"],
         args["prefix"],
         args["filename"],
         args["start_date"],
         args["end_date"],
-        args["file_size"],
         args["hide_filenames"],
     )

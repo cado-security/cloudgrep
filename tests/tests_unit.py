@@ -7,6 +7,7 @@ import os
 import boto3
 import timeout_decorator
 from moto import mock_s3
+import datetime
 
 from core.cloudgrep import CloudGrep
 
@@ -68,3 +69,21 @@ class CloudGrepTests(unittest.TestCase):
         print("Searching")
         CloudGrep().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
         print("Searched")
+
+    
+    def test_object_not_empty_and_size_greater_than_file_size(self):
+        # Object is not empty and its size is greater than or equal to the file_size parameter.
+        obj = {
+            "last_modified": datetime(2022, 1, 1),
+            "size": 1000,
+            "name": "example_file.txt"
+        }
+        key_contains = "example"
+        from_date = datetime(2021, 1, 1)
+        to_date = datetime(2023, 1, 1)
+        file_size = 500
+
+        cloud_grep = CloudGrep()
+        result = cloud_grep.filter_object_azure(obj, key_contains, from_date, to_date, file_size)
+
+        assert result == True
