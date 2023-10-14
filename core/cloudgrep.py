@@ -127,12 +127,12 @@ class CloudGrep:
 
         matched_count = 0
         client = storage.Client()
-        bucket = client.get_bucket(bucket)
+        bucket_gcp = client.get_bucket(bucket)
 
         def download_file(key: str) -> None:
             with tempfile.NamedTemporaryFile() as tmp:
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
-                blob = bucket.get_blob(key)
+                blob = bucket_gcp.get_blob(key)
                 blob.download_to_filename(tmp.name)
                 matched = self.search_file(tmp.name, key, query, hide_filenames)
                 if matched:
@@ -258,8 +258,8 @@ class CloudGrep:
     ) -> Iterator[str]:
         """Get all objects in a GCP bucket with a given prefix"""
         client = storage.Client()
-        bucket = client.get_bucket(bucket)
-        blobs = bucket.list_blobs(prefix=prefix)
+        bucket_gcp = client.get_bucket(bucket)
+        blobs = bucket_gcp.list_blobs(prefix=prefix)
         for blob in blobs:
             if self.filter_object_google(
                 blob,
