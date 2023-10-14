@@ -1,4 +1,8 @@
 import boto3
+from azure.storage.blob import BlobServiceClient, BlobPrefix
+from azure.identity import DefaultAzureCredential
+from azure.core.exceptions import ResourceNotFoundError
+from azure.storage.blob import BlobProperties
 from datetime import timezone, datetime
 from dateutil.parser import parse
 import botocore
@@ -101,6 +105,17 @@ class CloudGrep:
         if key_contains and key_contains not in obj["Key"]:
             return False  # Object does not contain the key_contains string
         return True
+    
+    def filter_object_azure(
+        self,
+        obj: dict,
+        key_contains: Optional[str],
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
+        file_size: int,
+    ) -> bool:
+        print("blob")
+        print(str(obj))
 
     def get_objects(
         self,
@@ -121,9 +136,41 @@ class CloudGrep:
                     if self.filter_object(obj, key_contains, from_date, end_date, file_size):
                         yield obj["Key"]
 
+    def get_azure_objects(
+        self,
+        account_name: str,
+        container_name: str,
+        prefix: Optional[str],
+        key_contains: Optional[str],
+        from_date: Optional[datetime],
+        end_date: Optional[datetime],
+        file_size: int,
+    ) -> Iterator[str]:
+        
+        default_credential = DefaultAzureCredential()
+        """ Get all objects in Azure storage container with a given prefix """
+        blob_service_client = BlobServiceClient.from_connection_string(
+            f"DefaultEndpointsProtocol=https;AccountName={account_name};EndpointSuffix=core.windows.net",
+            credential=default_credential
+        )
+        container_client = blob_service_client.get_container_client(container_name)
+        blobs = container_client.list_blobs(name_starts_with=prefix)
+        for blob in blobs:
+            if self.filter_object_azure(
+                blob,
+                key_contains,
+                from_date,
+                end_date,
+                file_size,
+            ):
+                print(f"blob: {blob.name}")
+                yield blob.name
+
     def search(
         self,
-        bucket: str,
+        bucket: Optional[str],
+        account_name: Optional[str],
+        container_name: Optional[str],
         query: str,
         prefix: Optional[str] = None,
         key_contains: Optional[str] = None,
@@ -132,19 +179,31 @@ class CloudGrep:
         file_size: int = 100000000,
         hide_filenames: bool = False,
     ) -> None:
-        s3_client = boto3.client("s3")
-        region = s3_client.get_bucket_location(Bucket=bucket)
-        print(
-            f"Bucket is in region: {region['LocationConstraint']} : Search from the same region to avoid egress charges."
-        )
+        
+        # Parse dates
         parsed_from_date = None
         if from_date:
             parsed_from_date = parse(from_date).astimezone(timezone.utc)  # type: ignore
         parsed_end_date = None
         if end_date:
             parsed_end_date = parse(end_date).astimezone(timezone.utc)  # type: ignore
-        matching_keys = list(
+        
+
+        if bucket:
+            matching_keys = list(
             self.get_objects(bucket, prefix, key_contains, parsed_from_date, parsed_end_date, file_size)
-        )
-        print(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
-        self.download_from_s3_multithread(bucket, matching_keys, query, hide_filenames)
+            )
+            s3_client = boto3.client("s3")
+            region = s3_client.get_bucket_location(Bucket=bucket)
+            print(
+                f"Bucket is in region: {region['LocationConstraint']} : Search from the same region to avoid egress charges."
+            )
+            print(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
+            self.download_from_s3_multithread(bucket, matching_keys, query, hide_filenames)
+
+        if account_name and container_name:
+            matching_keys = list(
+                self.get_azure_objects(account_name, container_name, prefix, key_contains, parsed_from_date, parsed_end_date, file_size)
+            )
+            print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
+            # self.download_from_azure(account_name, container_name, matching_keys, query, hide_filenames)
