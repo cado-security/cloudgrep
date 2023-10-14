@@ -5,6 +5,7 @@ python3 -m unittest discover tests
 import unittest
 import os
 import boto3
+from google.cloud import storage  # type: ignore
 import timeout_decorator
 from moto import mock_s3
 from datetime import datetime
@@ -83,3 +84,15 @@ class CloudGrepTests(unittest.TestCase):
         result = cloud_grep.filter_object_azure(obj, key_contains, from_date, to_date, file_size)  # type: ignore
 
         assert result == True
+
+    # Returns True if all conditions are met
+    def test_returns_true_if_all_conditions_are_met(self) -> None:
+        obj = storage.blob.Blob(name="example_file.txt", bucket="example_bucket")
+        key_contains = "example"
+        from_date = datetime(2021, 1, 1)
+        to_date = datetime(2023, 1, 1)
+
+        cloud_grep = CloudGrep()
+        result = cloud_grep.filter_object_google(obj, key_contains, from_date, to_date)
+
+        self.assertTrue(result)

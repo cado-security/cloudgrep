@@ -11,4 +11,4 @@ pip-audit==2.6.1
 azure-storage-blob==12.18.3
 azure-core==1.29.4
 azure-identity==1.14.1
-pytest-mock==3.11.1
+google-cloud-storage==2.12.0

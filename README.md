@@ -26,6 +26,11 @@ Simple Azure example:
 python3 cloudgrep.py -an some_account -cn some_container -q my_search
 ```
 
+Simple Google example:
+```
+python3 cloudgrep.py -gb do-not-delete-api-tests-bucket -q my_search
+```
+
 
 More complicated example:
 ```
@@ -86,9 +91,11 @@ You can run this from your local laptop, or from a virtual machine in your cloud
 ### Running in your Cloud and Authentication ###
 
 #### AWS ####
+Your system will need access to the S3 bucket. For example, if you are running on your laptop, you will need to [configure the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
+If you are running on an EC2, an [Instance Profile](https://devopscube.com/aws-iam-role-instance-profile/) is likely the best choice.
+
 If you run on an EC2 instance in the same region as the S3 bucket with a [VPC endpoint for S3](https://aws.amazon.com/blogs/architecture/overview-of-data-transfer-costs-for-common-architectures/) you can [avoid egress charges](https://awsmadeeasy.com/blog/aws-s3-vpc-endpoint-transfer-cost-reduction/).
 You can authenticate in a [number of ways](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
-If you are running on an EC2, an [Instance Profile](https://devopscube.com/aws-iam-role-instance-profile/) is likely the best choice.
 
 #### Azure ####
 The simplest way to authenticate with Azure is to first run:
@@ -96,6 +103,12 @@ The simplest way to authenticate with Azure is to first run:
 az login
 ```
 This will open a browser window and prompt you to login to Azure.
+
+#### GCP ####
+You will need to create a service account and download the credentials file then set with:
+```
+export GOOGLE_APPLICATION_CREDENTIALS="/Users/creds.json"
+```
 
 ### Contributions ###
 We welcome any contributions to this project! Please add via a Pull Request.
