@@ -34,7 +34,7 @@ python3 cloudgrep.py -b test-s3-access-logs --prefix "logs/" --filename ".log" -
 
 Saving the output to a file:
 ```
-python3 cloudgrep.py -b test-s3-access-logs -q 9RXXKPREHHTFQD77 --hide_filenames > output.txt
+python3 cloudgrep.py -b test-s3-access-logs -q 9RXXKPREHHTFQD77 --hide_filenames > matching_events.log
 ```
 
 Example output:
@@ -108,4 +108,4 @@ Possible future work could include:
 
 ### Help ###
 Please open a GitHub issue if you have any questions or suggestions.
-This is not an officially supported Cado Security product.
+This is not an officially supported [Cado Security](https://www.cadosecurity.com/) product.
