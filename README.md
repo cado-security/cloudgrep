@@ -104,6 +104,12 @@ az login
 ```
 This will open a browser window and prompt you to login to Azure.
 
+#### GCP ####
+You will need to create a service account and download the credentials file then set with:
+```
+export GOOGLE_APPLICATION_CREDENTIALS="/Users/creds.json"
+```
+
 ### Contributions ###
 We welcome any contributions to this project! Please add via a Pull Request.
 

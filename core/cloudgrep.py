@@ -189,14 +189,11 @@ class CloudGrep:
         key_contains: Optional[str],
         from_date: Optional[datetime],
         to_date: Optional[datetime],
-        file_size: int,
     ) -> bool:
         last_modified = obj.updated
         if last_modified and from_date and from_date > last_modified:
             return False
         if last_modified and to_date and last_modified > to_date:
-            return False
-        if obj.size == 0 or obj.size > file_size:
             return False
         if key_contains and key_contains not in obj.name:
             return False
@@ -258,7 +255,6 @@ class CloudGrep:
         key_contains: Optional[str],
         from_date: Optional[datetime],
         end_date: Optional[datetime],
-        file_size: int,
     ) -> Iterator[str]:
         """Get all objects in a GCP bucket with a given prefix"""
         client = storage.Client()
@@ -270,7 +266,6 @@ class CloudGrep:
                 key_contains,
                 from_date,
                 end_date,
-                file_size,
             ):
                 yield blob.name
 
@@ -319,7 +314,7 @@ class CloudGrep:
 
         if google_bucket:
             matching_keys = list(
-                self.get_google_objects(google_bucket, prefix, key_contains, parsed_from_date, parsed_end_date, file_size)
+                self.get_google_objects(google_bucket, prefix, key_contains, parsed_from_date, parsed_end_date)
             )
 
             print(f"Searching {len(matching_keys)} files in {google_bucket} for {query}...")
