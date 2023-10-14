@@ -2,7 +2,7 @@ import boto3
 from azure.storage.blob import BlobServiceClient, BlobProperties
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
-from google.cloud import storage # type: ignore
+from google.cloud import storage  # type: ignore
 from datetime import timezone, datetime
 from dateutil.parser import parse
 import botocore
@@ -184,7 +184,7 @@ class CloudGrep:
         return True
 
     def filter_object_google(
-        self,  
+        self,
         obj: storage.blob.Blob,
         key_contains: Optional[str],
         from_date: Optional[datetime],
@@ -198,8 +198,6 @@ class CloudGrep:
         if key_contains and key_contains not in obj.name:
             return False
         return True
-    
-
 
     def get_objects(
         self,

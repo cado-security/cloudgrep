@@ -5,7 +5,7 @@ python3 -m unittest discover tests
 import unittest
 import os
 import boto3
-from google.cloud import storage # type: ignore
+from google.cloud import storage  # type: ignore
 import timeout_decorator
 from moto import mock_s3
 from datetime import datetime
