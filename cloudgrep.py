@@ -3,8 +3,12 @@ import argparse
 import logging
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CloudGrep searches is grep for cloud storage like S3.")
-    parser.add_argument("-b", "--bucket", help="Bucket to search. E.g. my-bucket", required=True)
+    parser = argparse.ArgumentParser(
+        description="CloudGrep searches is grep for cloud storage like S3 and Azure Storage."
+    )
+    parser.add_argument("-b", "--bucket", help="AWS S3 Bucket to search. E.g. my-bucket", required=False)
+    parser.add_argument("-an", "--account-name", help="Azure Account Name to Search", required=False)
+    parser.add_argument("-cn", "--container-name", help="Azure Container Name to Search", required=False)
     parser.add_argument(
         "-q", "--query", help="Text to search for. Will be parsed as a Regex. E.g. example.com", required=True
     )
@@ -34,6 +38,7 @@ if __name__ == "__main__":
         "-fs",
         "--file_size",
         help="Optionally filter on Objects smaller than a file size, in bytes. Defaults to 100 Mb. ",
+        default=100000000,
         required=False,
     )
     parser.add_argument("-d", "--debug", help="Enable Debug logging. ", action="store_true", required=False)
@@ -44,14 +49,18 @@ if __name__ == "__main__":
 
     if args["debug"]:
         logging.basicConfig(format="[%(asctime)s]:[%(levelname)s] - %(message)s", level=logging.INFO)
+    else:
+        logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
 
     CloudGrep().search(
         args["bucket"],
+        args["account_name"],
+        args["container_name"],
         args["query"],
+        args["file_size"],
         args["prefix"],
         args["filename"],
         args["start_date"],
         args["end_date"],
-        args["file_size"],
         args["hide_filenames"],
     )

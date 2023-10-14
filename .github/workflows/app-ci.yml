@@ -20,15 +20,15 @@ jobs:
         python-version: '3.10'
     - name: Set up Environment
       run: |
-        python -m pip install --upgrade pip
-        pip3 install -r ./requirements.txt
+        python -m pip install --upgrade pip --default-timeout=100
+        pip3 install -r ./requirements.txt --default-timeout=100
     - name: Unit Tests
       run: |
         pwd
         python3 -m unittest discover ./tests/
     - name: Static Checks
       run: |
-        pip3 install flake8 mypy
+        pip3 install flake8 mypy --default-timeout=100
         mypy --config-file ./ci/mypy.cfg ./
         flake8 --config ./ci/flake8.cfg
         # If this fails run: python3 -m black . --config ./ci/black.toml
