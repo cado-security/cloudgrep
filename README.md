@@ -103,7 +103,7 @@ We welcome any contributions to this project! Please add via a Pull Request.
 Possible future work could include:
 - Support for Google Cloud
 - Support for zstd compression
-- Log parsing and detection using grok patterns, Sigma, Yara or Regex
+- Log parsing and detection using grok patterns, Sigma, Yara or a file of Regex queries
 - Export parsed logs in a standard syslog format
 
 ### Help ###
