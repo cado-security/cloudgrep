@@ -87,6 +87,31 @@ class CloudGrep:
             executor.map(download_file, files)
         return matched_count
 
+    def download_from_azure(self, account_name: str, container_name: str, files: List[str], query: str, hide_filenames: bool) -> int:
+        """ Dwnload every file in the container from azure
+        Returns number of matched files"""
+        default_credential = DefaultAzureCredential()
+        matched_count = 0
+        blob_service_client = BlobServiceClient.from_connection_string(
+            f"DefaultEndpointsProtocol=https;AccountName={account_name};EndpointSuffix=core.windows.net",
+            credential=default_credential
+        )
+        container_client = blob_service_client.get_container_client(container_name)
+        for file in files:
+            with tempfile.NamedTemporaryFile() as tmp:
+                logging.info(f"Downloading {account_name}/{container_name} {file} to {tmp.name}")
+                try:
+                    blob_client = container_client.get_blob_client(file)
+                    with open(tmp.name, "wb") as my_blob:
+                        blob_data = blob_client.download_blob()
+                        blob_data.readinto(my_blob)
+                    matched = self.search_file(tmp.name, file, query, hide_filenames)
+                    if matched:
+                        matched_count += 1
+                except ResourceNotFoundError:
+                    logging.info(f"File {file} not found in {account_name}/{container_name}")
+        return matched_count
+
     def filter_object(
         self,
         obj: dict,
@@ -214,4 +239,4 @@ class CloudGrep:
                 self.get_azure_objects(account_name, container_name, prefix, key_contains, parsed_from_date, parsed_end_date, file_size)
             )
             print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
-            # self.download_from_azure(account_name, container_name, matching_keys, query, hide_filenames)
+            self.download_from_azure(account_name, container_name, matching_keys, query, hide_filenames)
