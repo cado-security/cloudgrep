@@ -14,6 +14,7 @@ import gzip
 import zipfile
 import os
 
+
 class CloudGrep:
     def get_all_strings_line(self, file_path: str) -> List[str]:
         """Get all the strings from a file line by line
@@ -85,14 +86,16 @@ class CloudGrep:
             executor.map(download_file, files)
         return matched_count
 
-    def download_from_azure(self, account_name: str, container_name: str, files: List[str], query: str, hide_filenames: bool) -> int:
-        """ Download every file in the container from azure
+    def download_from_azure(
+        self, account_name: str, container_name: str, files: List[str], query: str, hide_filenames: bool
+    ) -> int:
+        """Download every file in the container from azure
         Returns number of matched files"""
         default_credential = DefaultAzureCredential()
         matched_count = 0
         blob_service_client = BlobServiceClient.from_connection_string(
             f"DefaultEndpointsProtocol=https;AccountName={account_name};EndpointSuffix=core.windows.net",
-            credential=default_credential
+            credential=default_credential,
         )
         container_client = blob_service_client.get_container_client(container_name)
 
@@ -135,7 +138,7 @@ class CloudGrep:
         if key_contains and key_contains not in obj["Key"]:
             return False  # Object does not contain the key_contains string
         return True
-    
+
     def filter_object_azure(
         self,
         obj: dict,
@@ -144,7 +147,6 @@ class CloudGrep:
         to_date: Optional[datetime],
         file_size: int,
     ) -> bool:
-        
         last_modified = obj["last_modified"]
         if last_modified and from_date and from_date > last_modified:
             return False  # Object was modified before the from_date
@@ -185,12 +187,11 @@ class CloudGrep:
         end_date: Optional[datetime],
         file_size: int,
     ) -> Iterator[str]:
-        
         default_credential = DefaultAzureCredential()
         """ Get all objects in Azure storage container with a given prefix """
         blob_service_client = BlobServiceClient.from_connection_string(
             f"DefaultEndpointsProtocol=https;AccountName={account_name};EndpointSuffix=core.windows.net",
-            credential=default_credential
+            credential=default_credential,
         )
         container_client = blob_service_client.get_container_client(container_name)
         blobs = container_client.list_blobs(name_starts_with=prefix)
@@ -217,7 +218,6 @@ class CloudGrep:
         end_date: Optional[datetime] = None,
         hide_filenames: bool = False,
     ) -> None:
-        
         # Parse dates
         parsed_from_date = None
         if from_date:
@@ -225,11 +225,10 @@ class CloudGrep:
         parsed_end_date = None
         if end_date:
             parsed_end_date = parse(end_date).astimezone(timezone.utc)  # type: ignore
-        
 
         if bucket:
             matching_keys = list(
-            self.get_objects(bucket, prefix, key_contains, parsed_from_date, parsed_end_date, file_size)
+                self.get_objects(bucket, prefix, key_contains, parsed_from_date, parsed_end_date, file_size)
             )
             s3_client = boto3.client("s3")
             region = s3_client.get_bucket_location(Bucket=bucket)
@@ -241,7 +240,9 @@ class CloudGrep:
 
         if account_name and container_name:
             matching_keys = list(
-                self.get_azure_objects(account_name, container_name, prefix, key_contains, parsed_from_date, parsed_end_date, file_size)
+                self.get_azure_objects(
+                    account_name, container_name, prefix, key_contains, parsed_from_date, parsed_end_date, file_size
+                )
             )
             print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
             self.download_from_azure(account_name, container_name, matching_keys, query, hide_filenames)

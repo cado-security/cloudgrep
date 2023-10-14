@@ -3,7 +3,9 @@ import argparse
 import logging
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="CloudGrep searches is grep for cloud storage like S3 and Azure Storage.")
+    parser = argparse.ArgumentParser(
+        description="CloudGrep searches is grep for cloud storage like S3 and Azure Storage."
+    )
     parser.add_argument("-b", "--bucket", help="AWS S3 Bucket to search. E.g. my-bucket", required=False)
     parser.add_argument("-an", "--account-name", help="Azure Account Name to Search", required=False)
     parser.add_argument("-cn", "--container-name", help="Azure Container Name to Search", required=False)

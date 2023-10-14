@@ -73,11 +73,7 @@ class CloudGrepTests(unittest.TestCase):
 
     def test_object_not_empty_and_size_greater_than_file_size(self) -> None:
         # Object is not empty and its size is greater than or equal to the file_size parameter.
-        obj = {
-            "last_modified": datetime(2022, 1, 1),
-            "size": 1000,
-            "name": "example_file.txt"
-        }
+        obj = {"last_modified": datetime(2022, 1, 1), "size": 1000, "name": "example_file.txt"}
         key_contains = "example"
         from_date = datetime(2021, 1, 1)
         to_date = datetime(2023, 1, 1)
