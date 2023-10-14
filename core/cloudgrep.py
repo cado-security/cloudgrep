@@ -2,6 +2,7 @@ import boto3
 from azure.storage.blob import BlobServiceClient, BlobProperties
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
+from google.cloud import storage
 from datetime import timezone, datetime
 from dateutil.parser import parse
 import botocore
@@ -120,6 +121,30 @@ class CloudGrep:
 
         return matched_count
 
+    def download_from_google(self, bucket: str, files: List[str], query: str, hide_filenames: bool) -> int:
+        """Download every file in the bucket from google
+        Returns number of matched files"""
+
+        matched_count = 0
+        client = storage.Client()
+        bucket = client.get_bucket(bucket)
+
+        def download_file(key: str) -> None:
+            with tempfile.NamedTemporaryFile() as tmp:
+                logging.info(f"Downloading {bucket} {key} to {tmp.name}")
+                blob = bucket.get_blob(key)
+                blob.download_to_filename(tmp.name)
+                matched = self.search_file(tmp.name, key, query, hide_filenames)
+                if matched:
+                    nonlocal matched_count
+                    matched_count += 1
+
+        # Use ThreadPoolExecutor to download the files
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(download_file, files)
+
+        return matched_count
+
     def filter_object(
         self,
         obj: dict,
@@ -157,6 +182,27 @@ class CloudGrep:
         if key_contains and key_contains not in obj["name"]:
             return False  # Object does not contain the key_contains string
         return True
+
+    def filter_object_google(
+        self,  
+        obj: storage.blob.Blob,
+        key_contains: Optional[str],
+        from_date: Optional[datetime],
+        to_date: Optional[datetime],
+        file_size: int,
+    ) -> bool:
+        last_modified = obj.updated
+        if last_modified and from_date and from_date > last_modified:
+            return False
+        if last_modified and to_date and last_modified > to_date:
+            return False
+        if obj.size == 0 or obj.size > file_size:
+            return False
+        if key_contains and key_contains not in obj.name:
+            return False
+        return True
+    
+
 
     def get_objects(
         self,
@@ -205,11 +251,35 @@ class CloudGrep:
             ):
                 yield blob.name
 
+    def get_google_objects(
+        self,
+        bucket: str,
+        prefix: Optional[str],
+        key_contains: Optional[str],
+        from_date: Optional[datetime],
+        end_date: Optional[datetime],
+        file_size: int,
+    ) -> Iterator[str]:
+        """Get all objects in a GCP bucket with a given prefix"""
+        client = storage.Client()
+        bucket = client.get_bucket(bucket)
+        blobs = bucket.list_blobs(prefix=prefix)
+        for blob in blobs:
+            if self.filter_object_google(
+                blob,
+                key_contains,
+                from_date,
+                end_date,
+                file_size,
+            ):
+                yield blob.name
+
     def search(
         self,
         bucket: Optional[str],
         account_name: Optional[str],
         container_name: Optional[str],
+        google_bucket: Optional[str],
         query: str,
         file_size: int,
         prefix: Optional[str] = None,
@@ -246,3 +316,12 @@ class CloudGrep:
             )
             print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
             self.download_from_azure(account_name, container_name, matching_keys, query, hide_filenames)
+
+        if google_bucket:
+            matching_keys = list(
+                self.get_google_objects(google_bucket, prefix, key_contains, parsed_from_date, parsed_end_date, file_size)
+            )
+
+            print(f"Searching {len(matching_keys)} files in {google_bucket} for {query}...")
+
+            self.download_from_google(google_bucket, matching_keys, query, hide_filenames)
