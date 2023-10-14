@@ -1,5 +1,5 @@
 import boto3
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, BlobProperties
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
 from datetime import timezone, datetime
@@ -141,7 +141,7 @@ class CloudGrep:
 
     def filter_object_azure(
         self,
-        obj: dict,
+        obj: BlobProperties,
         key_contains: Optional[str],
         from_date: Optional[datetime],
         to_date: Optional[datetime],
