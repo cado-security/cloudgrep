@@ -71,7 +71,7 @@ class CloudGrepTests(unittest.TestCase):
         CloudGrep().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
         print("Searched")
 
-    def test_object_not_empty_and_size_greater_than_file_size(self):
+    def test_object_not_empty_and_size_greater_than_file_size(self) -> None:
         # Object is not empty and its size is greater than or equal to the file_size parameter.
         obj = {
             "last_modified": datetime(2022, 1, 1),
