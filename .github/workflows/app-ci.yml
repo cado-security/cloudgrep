@@ -34,3 +34,62 @@ jobs:
         # If this fails run: python3 -m black . --config ./ci/black.toml
         python3 -m black . --config ./ci/black.toml --check
         python3 -m pip_audit -r requirements.txt
+
+
+
+  compiled-linux:
+    runs-on: ubuntu-latest
+    container:
+      image: centos:centos7  # Intentionally old
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup environment
+      run: |
+        yum -y install python3
+        pip3 install --upgrade pip
+        pip3 install -r ./requirements.txt
+        yum -y install gcc python3-devel upx
+    - name: Build & Run Binary
+      run: |
+        pip3 install pyinstaller
+        chmod +x ./release/generate_linux_binary.sh
+        ./release/generate_linux_binary.sh
+        chmod +x ./dist/cloudgrep
+        ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
+
+
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Setup Environment
+      run: |
+        pip3 install -r ./requirements.txt
+    - name: Run cloudgrep Python
+      run: |
+        cd release
+        ./generate_windows_binary.bat
+
+
+  macos:
+    runs-on: macos-12
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Setup Environment
+      run: |
+        pip3 install -r ./requirements.txt
+    - name: Run cloudgrep Python
+      run: |
+        pip3 install pyinstaller
+        chmod +x ./release/generate_linux_binary.sh
+        ./release/generate_linux_binary.sh
+        chmod +x ./dist/cloudgrep
+        ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
