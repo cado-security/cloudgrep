@@ -56,7 +56,7 @@ jobs:
         ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
     - uses: actions/upload-artifact@v3
       with:
-          name: dist
+          name: dist-linux
           path: ./dist/*
 
   compile-windows:
@@ -79,7 +79,7 @@ jobs:
         ./dist/cloudgrep.exe
     - uses: actions/upload-artifact@v3
       with:
-          name: dist
+          name: dist-windows
           path: ./release/dist/*
 
   compile-macos:
@@ -102,5 +102,5 @@ jobs:
         ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
     - uses: actions/upload-artifact@v3
       with:
-          name: dist
+          name: dist-osx
           path: ./dist/*
