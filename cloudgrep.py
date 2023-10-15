@@ -2,9 +2,11 @@ from core.cloudgrep import CloudGrep
 import argparse
 import logging
 
+VERSION = '1.0.1'
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="CloudGrep searches is grep for cloud storage like S3 and Azure Storage."
+        description=f"CloudGrep searches is grep for cloud storage like S3 and Azure Storage. Version: {VERSION}"
     )
     parser.add_argument("-b", "--bucket", help="AWS S3 Bucket to search. E.g. my-bucket", required=False)
     parser.add_argument("-an", "--account-name", help="Azure Account Name to Search", required=False)
