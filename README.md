@@ -4,7 +4,7 @@ cloudgrep searches cloud storage.
 ![ci](https://github.com/cado-security/cloudgrep/actions/workflows/app-ci.yml/badge.svg?branch=main) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
-It currently supports searching log files, optionally compressed with gzip (.gz) or zip (.zip), in AWS S3 or Azure storage.
+It currently supports searching log files, optionally compressed with gzip (.gz) or zip (.zip), in AWS S3, Azure Storage or Google Cloud Storage.
 
 ![Diagram](readme/Diagram.png "Diagram")
 
@@ -29,7 +29,7 @@ python3 cloudgrep.py -an some_account -cn some_container -q my_search
 
 Simple Google example:
 ```
-python3 cloudgrep.py -gb do-not-delete-api-tests-bucket -q my_search
+python3 cloudgrep.py -gb my-gcp-bucket -q my_search
 ```
 
 
