@@ -105,7 +105,7 @@ class CloudGrepTests(unittest.TestCase):
         self.assertTrue(result)
 
     # returns a string with the contents of the file
-    def test_returns_string_with_file_contents(self):
+    def test_returns_string_with_file_contents(self) -> None:
         file = "queries.txt"
         cloud_grep = CloudGrep()
         with open(file, "w") as f:
