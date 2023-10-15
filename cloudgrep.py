@@ -67,6 +67,7 @@ if __name__ == "__main__":
         args["container_name"],
         args["google_bucket"],
         args["query"],
+        args["file"],
         args["file_size"],
         args["prefix"],
         args["filename"],
