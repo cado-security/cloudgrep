@@ -62,6 +62,13 @@ class CloudGrepTests(unittest.TestCase):
         hits = CloudGrep().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
         assert hits == 1
 
+        print("Testing with multiple queries from a file")
+        file = "queries.txt"
+        with open(file, "w") as f:
+            f.write(f"query1\n{_QUERY}\nquery3")
+        multi_query = CloudGrep().load_queries(file)
+        hits = CloudGrep().download_from_s3_multithread(_BUCKET, matching_keys, multi_query, False)
+
         # Upload a log 10 000 times and see how long it takes
         print("Uploading large number of logs")
         for x in range(1000):
@@ -96,3 +103,13 @@ class CloudGrepTests(unittest.TestCase):
         result = cloud_grep.filter_object_google(obj, key_contains, from_date, to_date)
 
         self.assertTrue(result)
+
+    # returns a string with the contents of the file
+    def test_returns_string_with_file_contents(self) -> None:
+        file = "queries.txt"
+        cloud_grep = CloudGrep()
+        with open(file, "w") as f:
+            f.write("query1\nquery2\nquery3")
+        queries = cloud_grep.load_queries(file)
+        self.assertIsInstance(queries, str)
+        self.assertEqual(queries, "query1|query2|query3")

@@ -13,7 +13,13 @@ if __name__ == "__main__":
     parser.add_argument("-cn", "--container-name", help="Azure Container Name to Search", required=False)
     parser.add_argument("-gb", "--google-bucket", help="Google Cloud Bucket to Search", required=False)
     parser.add_argument(
-        "-q", "--query", help="Text to search for. Will be parsed as a Regex. E.g. example.com", required=True
+        "-q", "--query", help="Text to search for. Will be parsed as a Regex. E.g. example.com", required=False
+    )
+    parser.add_argument(
+        "-v",
+        "--file",
+        help="File containing a list of words or regular expressions to search for. One per line.",
+        required=False,
     )
     parser.add_argument(
         "-p",
@@ -61,6 +67,7 @@ if __name__ == "__main__":
         args["container_name"],
         args["google_bucket"],
         args["query"],
+        args["file"],
         args["file_size"],
         args["prefix"],
         args["filename"],
