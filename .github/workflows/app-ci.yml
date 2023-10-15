@@ -35,20 +35,18 @@ jobs:
         python3 -m black . --config ./ci/black.toml --check
         python3 -m pip_audit -r requirements.txt
 
-
-
   compiled-linux:
     runs-on: ubuntu-latest
-    container:
-      image: centos:centos7  # Intentionally old
     steps:
     - uses: actions/checkout@v3
-    - name: Setup environment
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Set up Environment
       run: |
-        yum -y install python3
-        pip3 install --upgrade pip
-        pip3 install -r ./requirements.txt
-        yum -y install gcc python3-devel upx
+        python -m pip install --upgrade pip --default-timeout=100
+        pip3 install -r ./requirements.txt --default-timeout=100
     - name: Build & Run Binary
       run: |
         pip3 install pyinstaller
@@ -68,7 +66,9 @@ jobs:
         python-version: '3.10'
     - name: Setup Environment
       run: |
-        pip3 install -r ./requirements.txt
+        pip install -r ./requirements.txt
+        pip install setuptools_rust
+        pip install pyinstaller
     - name: Run cloudgrep Python
       run: |
         cd release
