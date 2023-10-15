@@ -80,7 +80,7 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
           name: dist
-          path: ./dist/*
+          path: ./release/dist/*
 
   compile-macos:
     runs-on: macos-12
