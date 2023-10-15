@@ -290,7 +290,7 @@ class CloudGrep:
         # load in a list of queries from a file
         if not query and file:
             logging.info(f"Loading queries in from {file}")
-            query = self.load_queries(file)
+            query : str = self.load_queries(file)
 
         # Parse dates
         parsed_from_date = None
