@@ -52,10 +52,10 @@ access2023-01-09-20-34-20-EAC533CB93B4ACBE: abbd82b5ad5dc5d024cd1841d19c0cf2fd74
 
 ### Arguments ###
 ```
-usage: cloudgrep.py [-h] [-b BUCKET] [-an ACCOUNT_NAME] [-cn CONTAINER_NAME] -q QUERY [-p PREFIX] [-f FILENAME] [-s START_DATE] [-e END_DATE] [-fs FILE_SIZE]
-                    [-d] [-hf]
+usage: cloudgrep.py [-h] [-b BUCKET] [-an ACCOUNT_NAME] [-cn CONTAINER_NAME] [-gb GOOGLE_BUCKET] [-q QUERY] [-v FILE] [-p PREFIX] [-f FILENAME]
+                    [-s START_DATE] [-e END_DATE] [-fs FILE_SIZE] [-d] [-hf]
 
-CloudGrep searches is grep for cloud storage like S3.
+CloudGrep searches is grep for cloud storage like S3 and Azure Storage. Version: 1.0.1
 
 options:
   -h, --help            show this help message and exit
@@ -65,8 +65,11 @@ options:
                         Azure Account Name to Search
   -cn CONTAINER_NAME, --container-name CONTAINER_NAME
                         Azure Container Name to Search
+  -gb GOOGLE_BUCKET, --google-bucket GOOGLE_BUCKET
+                        Google Cloud Bucket to Search
   -q QUERY, --query QUERY
                         Text to search for. Will be parsed as a Regex. E.g. example.com
+  -v FILE, --file FILE  File containing a list of words or regular expressions to search for. One per line.
   -p PREFIX, --prefix PREFIX
                         Optionally filter on the start of the Object name. E.g. logs/
   -f FILENAME, --filename FILENAME
