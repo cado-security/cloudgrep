@@ -270,7 +270,7 @@ class CloudGrep:
     def load_queries(self, file: str) -> str:
         """Load in a list of queries from a file"""
         with open(file, "r") as f:
-            return "|".join([line.strip() for line in f.readlines()])
+            return "|".join([line.strip() for line in f.readlines() if len(line.strip())])
 
     def search(
         self,
