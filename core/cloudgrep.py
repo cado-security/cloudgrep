@@ -278,7 +278,7 @@ class CloudGrep:
         account_name: Optional[str],
         container_name: Optional[str],
         google_bucket: Optional[str],
-        query: Optional[str],
+        query: str,
         file: Optional[str],
         file_size: int,
         prefix: Optional[str] = None,
@@ -290,7 +290,7 @@ class CloudGrep:
         # load in a list of queries from a file
         if not query and file:
             logging.info(f"Loading queries in from {file}")
-            query : str = self.load_queries(file)
+            query = self.load_queries(file)
 
         # Parse dates
         parsed_from_date = None
