@@ -35,7 +35,7 @@ jobs:
         python3 -m black . --config ./ci/black.toml --check
         python3 -m pip_audit -r requirements.txt
 
-  compiled-linux:
+  compile-linux:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -54,9 +54,11 @@ jobs:
         ./release/generate_linux_binary.sh
         chmod +x ./dist/cloudgrep
         ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
+      with:
+          name: dist
+          path: ./dist/*
 
-
-  windows:
+  compile-windows:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
@@ -73,9 +75,12 @@ jobs:
       run: |
         cd release
         ./generate_windows_binary.bat
+        ./dist/cloudgrep.exe
+      with:
+          name: dist
+          path: ./dist/*
 
-
-  macos:
+  compile-macos:
     runs-on: macos-12
     steps:
     - uses: actions/checkout@v3
@@ -93,3 +98,6 @@ jobs:
         ./release/generate_linux_binary.sh
         chmod +x ./dist/cloudgrep
         ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
+      with:
+          name: dist
+          path: ./dist/*
