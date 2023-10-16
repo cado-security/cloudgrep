@@ -18,7 +18,7 @@ It currently supports searching log files, optionally compressed with gzip (.gz)
 
 Simple example:
 ```
-python3 cloudgrep.py --bucket test-s3-access-logs --query 9RXXKPREHHTFQD77
+./cloudgrep --bucket test-s3-access-logs --query 9RXXKPREHHTFQD77
 python3 cloudgrep.py -b test-s3-access-logs -q 9RXXKPREHHTFQD77
 ```
 
@@ -89,6 +89,7 @@ options:
 
 Install with:
 ``` pip3 install -r requirements.txt ```
+Or download the latest compiled release [here](https://github.com/cado-security/cloudgrep/releases/tag/Latest)
 
 You can run this from your local laptop, or from a virtual machine in your cloud provider.
 
