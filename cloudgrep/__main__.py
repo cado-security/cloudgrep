@@ -1,10 +1,11 @@
-from core.cloudgrep import CloudGrep
+from .cloudgrep import CloudGrep
 import argparse
 import logging
 
 VERSION = "1.0.1"
 
-if __name__ == "__main__":
+
+def main():
     parser = argparse.ArgumentParser(
         description=f"CloudGrep searches is grep for cloud storage like S3 and Azure Storage. Version: {VERSION}"
     )
@@ -75,3 +76,7 @@ if __name__ == "__main__":
         args["end_date"],
         args["hide_filenames"],
     )
+
+
+if __name__ == "__main__":
+    main()
