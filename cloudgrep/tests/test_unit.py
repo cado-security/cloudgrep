@@ -10,7 +10,7 @@ import timeout_decorator
 from moto import mock_s3
 from datetime import datetime
 
-from ..cloudgrep import CloudGrep
+from cloudgrep import CloudGrep
 
 
 BASE_PATH = os.path.dirname(os.path.realpath(__file__))
