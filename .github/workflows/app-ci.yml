@@ -25,7 +25,7 @@ jobs:
     - name: Unit Tests
       run: |
         pwd
-        python3 -m unittest discover ./tests/
+        python3 -m unittest discover ./cloudgrep/tests/
     - name: Static Checks
       run: |
         pip3 install flake8 mypy --default-timeout=100
