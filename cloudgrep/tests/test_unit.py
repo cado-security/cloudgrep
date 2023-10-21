@@ -10,7 +10,10 @@ import timeout_decorator
 from moto import mock_s3
 from datetime import datetime
 
-from core.cloudgrep import CloudGrep
+from ..cloudgrep import CloudGrep
+
+
+BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 class CloudGrepTests(unittest.TestCase):
@@ -20,20 +23,20 @@ class CloudGrepTests(unittest.TestCase):
         self.assertEqual(1, 1)
 
     def test_weird_files(self) -> None:
-        for filename in os.listdir("./tests/data/"):
+        for filename in os.listdir(f"{BASE_PATH}/data/"):
             # Just checks we don't crash on any files
-            CloudGrep().get_all_strings_line("./tests/data/" + filename)
+            CloudGrep().get_all_strings_line(f"{BASE_PATH}/data/" + filename)
 
-        self.assertIn("SomeLine", CloudGrep().get_all_strings_line("./tests/data/14_3.log"))
+        self.assertIn("SomeLine", CloudGrep().get_all_strings_line(f"{BASE_PATH}/data/14_3.log"))
 
     def test_gzip(self) -> None:
         # Get lines from .gz compressed file
-        found = CloudGrep().search_file("./tests/data/000000.gz", "000000.gz", "Running on machine", False)
+        found = CloudGrep().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False)
         self.assertTrue(found)
 
     def test_zip(self) -> None:
         # Get lines from .zip compressed file
-        found = CloudGrep().search_file("./tests/data/000000.zip", "000000.zip", "Running on machine", False)
+        found = CloudGrep().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False)
         self.assertTrue(found)
 
     @timeout_decorator.timeout(5)  # Normally takes around 3 seconds to run in github actions
@@ -50,7 +53,7 @@ class CloudGrepTests(unittest.TestCase):
         s3 = boto3.client("s3", region_name="us-east-1")
 
         for file_name in ["14_3.log", "35010_7.log", "apache_access.log"]:
-            with open(f"./tests/data/{file_name}", "rb") as data:
+            with open(f"{BASE_PATH}/data/{file_name}", "rb") as data:
                 s3.upload_fileobj(data, _BUCKET, file_name)
 
         print("Checking we include every file")
@@ -72,7 +75,7 @@ class CloudGrepTests(unittest.TestCase):
         # Upload a log 10 000 times and see how long it takes
         print("Uploading large number of logs")
         for x in range(1000):
-            with open("./tests/data/apache_access.log", "rb") as data:
+            with open(f"{BASE_PATH}/data/apache_access.log", "rb") as data:
                 s3.upload_fileobj(data, _BUCKET, str(x))
 
         print("Searching")
