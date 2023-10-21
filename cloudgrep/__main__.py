@@ -5,7 +5,7 @@ import logging
 VERSION = "1.0.1"
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description=f"CloudGrep searches is grep for cloud storage like S3 and Azure Storage. Version: {VERSION}"
     )
