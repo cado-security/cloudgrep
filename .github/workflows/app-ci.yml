@@ -30,7 +30,7 @@ jobs:
         pip3 install flake8 mypy --default-timeout=100
         mypy --config-file ./ci/mypy.cfg ./
         flake8 --config ./ci/flake8.cfg
-        # If this fails run: python3 -m black . --config ./ci/black.toml
+        echo If this fails run: python3 -m black . --config ./ci/black.toml
         python3 -m black . --config ./ci/black.toml --check
         python3 -m pip_audit -r requirements.txt
 

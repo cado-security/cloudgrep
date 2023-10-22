@@ -1,6 +1,7 @@
 from .cloudgrep import CloudGrep
 import argparse
 import logging
+import sys
 
 VERSION = "1.0.1"
 
@@ -51,11 +52,21 @@ def main() -> None:
         default=100000000,
         required=False,
     )
+    parser.add_argument(
+        "-pr",
+        "--profile",
+        help="Set an AWS profile to use. E.g. default, dev, prod.",
+        required=False,
+    )
     parser.add_argument("-d", "--debug", help="Enable Debug logging. ", action="store_true", required=False)
     parser.add_argument(
         "-hf", "--hide_filenames", help="Dont show matching filesnames. ", action="store_true", required=False
     )
     args = vars(parser.parse_args())
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
 
     if args["debug"]:
         logging.basicConfig(format="[%(asctime)s]:[%(levelname)s] - %(message)s", level=logging.INFO)
@@ -75,6 +86,7 @@ def main() -> None:
         args["start_date"],
         args["end_date"],
         args["hide_filenames"],
+        args["profile"],
     )
 
 
