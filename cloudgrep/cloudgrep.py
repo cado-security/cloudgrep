@@ -286,11 +286,16 @@ class CloudGrep:
         from_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         hide_filenames: bool = False,
+        profile: Optional[str] = None,
     ) -> None:
         # load in a list of queries from a file
         if not query and file:
             logging.info(f"Loading queries in from {file}")
             query = self.load_queries(file)
+
+        if profile:
+            # Set the AWS credentials profile to use
+            boto3.setup_default_session(profile_name=profile)
 
         # Parse dates
         parsed_from_date = None
