@@ -93,6 +93,17 @@ Or download the latest compiled release [here](https://github.com/cado-security/
 
 You can run this from your local laptop, or from a virtual machine in your cloud provider.
 
+#### Docker ####
+
+Build with:
+``` docker build -t cloudgrep . ```
+
+Run with:
+``` docker run --rm -ti cloudgrep ```
+
+To pass environment variables, e.g. for AWS:
+``` docker run --rm  --env-file <(env|grep AWS) -ti cloudgrep```
+
 ### Running in your Cloud and Authentication ###
 
 #### AWS ####
