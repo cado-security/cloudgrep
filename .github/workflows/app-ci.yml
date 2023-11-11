@@ -95,11 +95,34 @@ jobs:
     - name: Run cloudgrep Python
       run: |
         pip3 install pyinstaller
-        chmod +x ./release/generate_osx_binary.sh
-        ./release/generate_osx_binary.sh
+        chmod +x ./release/generate_linux_binary.sh
+        ./release/generate_linux_binary.sh
         chmod +x ./dist/cloudgrep
         ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
     - uses: actions/upload-artifact@v3
       with:
-          name: dist-osx
+          name: dist-osx-x64
+          path: ./dist/*
+
+  compile-macos-arm64:
+    runs-on: macos-13-arm64
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    - name: Setup Environment
+      run: |
+        pip3 install -r ./requirements.txt
+    - name: Run cloudgrep Python
+      run: |
+        pip3 install pyinstaller
+        chmod +x ./release/generate_linux_binary.sh
+        ./release/generate_linux_binary.sh
+        chmod +x ./dist/cloudgrep
+        ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
+    - uses: actions/upload-artifact@v3
+      with:
+          name: dist-osx-arm64
           path: ./dist/*
