@@ -1,4 +1,4 @@
-from .cloudgrep import CloudGrep
+from cloudgrep.cloudgrep import CloudGrep
 import argparse
 import logging
 import sys
