@@ -95,8 +95,8 @@ jobs:
     - name: Run cloudgrep Python
       run: |
         pip3 install pyinstaller
-        chmod +x ./release/generate_linux_binary.sh
-        ./release/generate_linux_binary.sh
+        chmod +x ./release/generate_osx_binary.sh
+        ./release/generate_osx_binary.sh
         chmod +x ./dist/cloudgrep
         ./dist/cloudgrep # check it doesn't return non 0 exit status, i.e. crash
     - uses: actions/upload-artifact@v3
