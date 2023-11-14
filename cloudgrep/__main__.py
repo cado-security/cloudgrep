@@ -3,7 +3,7 @@ import argparse
 import logging
 import sys
 
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 
 
 def main() -> None:
