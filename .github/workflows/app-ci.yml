@@ -75,7 +75,7 @@ jobs:
       run: |
         cd release
         ./generate_windows_binary.bat
-        ./dist/cloudgrep.exe
+        ./dist/cloudgrep.exe -h
     - uses: actions/upload-artifact@v3
       with:
           name: dist-windows
