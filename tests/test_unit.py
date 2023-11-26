@@ -10,6 +10,8 @@ import timeout_decorator
 from moto import mock_s3
 from datetime import datetime
 
+from cloudgrep.cloud import Cloud
+from cloudgrep.search import Search
 from cloudgrep.cloudgrep import CloudGrep
 
 
@@ -25,18 +27,18 @@ class CloudGrepTests(unittest.TestCase):
     def test_weird_files(self) -> None:
         for filename in os.listdir(f"{BASE_PATH}/data/"):
             # Just checks we don't crash on any files
-            CloudGrep().get_all_strings_line(f"{BASE_PATH}/data/" + filename)
+            Search().get_all_strings_line(f"{BASE_PATH}/data/" + filename)
 
-        self.assertIn("SomeLine", CloudGrep().get_all_strings_line(f"{BASE_PATH}/data/14_3.log"))
+        self.assertIn("SomeLine", Search().get_all_strings_line(f"{BASE_PATH}/data/14_3.log"))
 
     def test_gzip(self) -> None:
         # Get lines from .gz compressed file
-        found = CloudGrep().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False)
+        found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False)
         self.assertTrue(found)
 
     def test_zip(self) -> None:
         # Get lines from .zip compressed file
-        found = CloudGrep().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False)
+        found = Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False)
         self.assertTrue(found)
 
     @timeout_decorator.timeout(5)  # Normally takes around 3 seconds to run in github actions
@@ -57,12 +59,12 @@ class CloudGrepTests(unittest.TestCase):
                 s3.upload_fileobj(data, _BUCKET, file_name)
 
         print("Checking we include every file")
-        matching_keys = list(CloudGrep().get_objects(_BUCKET, "", None, None, None, 100000))
+        matching_keys = list(Cloud().get_objects(_BUCKET, "", None, None, None, 100000))
         print(f"Checking we include every file: {matching_keys}")
         assert len(matching_keys) == 3
 
         print(f"Checking we only get one search hit in: {matching_keys}")
-        hits = CloudGrep().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
+        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
         assert hits == 1
 
         print("Testing with multiple queries from a file")
@@ -70,7 +72,7 @@ class CloudGrepTests(unittest.TestCase):
         with open(file, "w") as f:
             f.write(f"query1\n{_QUERY}\nquery3")
         multi_query = CloudGrep().load_queries(file)
-        hits = CloudGrep().download_from_s3_multithread(_BUCKET, matching_keys, multi_query, False)
+        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, multi_query, False)
 
         # Upload a log 10 000 times and see how long it takes
         print("Uploading large number of logs")
@@ -79,7 +81,7 @@ class CloudGrepTests(unittest.TestCase):
                 s3.upload_fileobj(data, _BUCKET, str(x))
 
         print("Searching")
-        CloudGrep().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
+        Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
         print("Searched")
 
     def test_object_not_empty_and_size_greater_than_file_size(self) -> None:
@@ -90,8 +92,7 @@ class CloudGrepTests(unittest.TestCase):
         to_date = datetime(2023, 1, 1)
         file_size = 50000
 
-        cloud_grep = CloudGrep()
-        result = cloud_grep.filter_object_azure(obj, key_contains, from_date, to_date, file_size)  # type: ignore
+        result = Cloud().filter_object_azure(obj, key_contains, from_date, to_date, file_size)  # type: ignore
 
         assert result == True
 
@@ -102,17 +103,15 @@ class CloudGrepTests(unittest.TestCase):
         from_date = datetime(2021, 1, 1)
         to_date = datetime(2023, 1, 1)
 
-        cloud_grep = CloudGrep()
-        result = cloud_grep.filter_object_google(obj, key_contains, from_date, to_date)
+        result = Cloud().filter_object_google(obj, key_contains, from_date, to_date)
 
         self.assertTrue(result)
 
     # returns a string with the contents of the file
     def test_returns_string_with_file_contents(self) -> None:
         file = "queries.txt"
-        cloud_grep = CloudGrep()
         with open(file, "w") as f:
             f.write("query1\nquery2\nquery3")
-        queries = cloud_grep.load_queries(file)
+        queries = CloudGrep().load_queries(file)
         self.assertIsInstance(queries, str)
         self.assertEqual(queries, "query1|query2|query3")
