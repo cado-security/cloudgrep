@@ -1,12 +1,12 @@
 import boto3
 from datetime import timezone, datetime
 from dateutil.parser import parse
-from typing import  Optional
+from typing import Optional
 import logging
 from cloudgrep.cloud import Cloud
 
-class CloudGrep:
 
+class CloudGrep:
     def load_queries(self, file: str) -> str:
         """Load in a list of queries from a file"""
         with open(file, "r") as f:

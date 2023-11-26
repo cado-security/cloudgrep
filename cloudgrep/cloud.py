@@ -11,8 +11,8 @@ from typing import Iterator, Optional, List
 import logging
 from cloudgrep.search import Search
 
-class Cloud:
 
+class Cloud:
     def download_from_s3_multithread(self, bucket: str, files: List[str], query: str, hide_filenames: bool) -> int:
         """Use ThreadPoolExecutor and boto3 to download every file in the bucket from s3
         Returns number of matched files"""
