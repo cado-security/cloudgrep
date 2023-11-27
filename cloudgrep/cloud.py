@@ -7,14 +7,14 @@ from datetime import datetime
 import botocore
 import concurrent
 import tempfile
-from typing import Iterator, Optional, List
+from typing import Iterator, Optional, List, Any
 import logging
 from cloudgrep.search import Search
 
 
 class Cloud:
     def download_from_s3_multithread(
-        self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_rules: any
+        self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_rules: Any
     ) -> int:
         """Use ThreadPoolExecutor and boto3 to download every file in the bucket from s3
         Returns number of matched files"""
@@ -51,7 +51,7 @@ class Cloud:
         files: List[str],
         query: str,
         hide_filenames: bool,
-        yara_rules: any,
+        yara_rules: Any,
     ) -> int:
         """Download every file in the container from azure
         Returns number of matched files"""
@@ -85,7 +85,7 @@ class Cloud:
         return matched_count
 
     def download_from_google(
-        self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_rules: any
+        self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_rules: Any
     ) -> int:
         """Download every file in the bucket from google
         Returns number of matched files"""
