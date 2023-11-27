@@ -87,7 +87,7 @@ def main() -> None:
         args["query"],
         args["file"],
         args["yara"],
-        args["file_size"],
+        int(args["file_size"]),
         args["prefix"],
         args["filename"],
         args["start_date"],
