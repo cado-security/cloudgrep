@@ -5,8 +5,6 @@ import logging
 import gzip
 import zipfile
 import os
-import yara  # type: ignore
-
 
 class Search:
     def get_all_strings_line(self, file_path: str) -> List[str]:
