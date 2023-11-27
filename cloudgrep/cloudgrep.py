@@ -4,6 +4,7 @@ from dateutil.parser import parse
 from typing import Optional
 import logging
 from cloudgrep.cloud import Cloud
+import yara
 
 
 class CloudGrep:
@@ -20,6 +21,7 @@ class CloudGrep:
         google_bucket: Optional[str],
         query: str,
         file: Optional[str],
+        yara_file: Optional[str],
         file_size: int,
         prefix: Optional[str] = None,
         key_contains: Optional[str] = None,
@@ -32,6 +34,10 @@ class CloudGrep:
         if not query and file:
             logging.info(f"Loading queries in from {file}")
             query = self.load_queries(file)
+
+        if yara_file:
+            yara_rules = yara.compile(filepath=yara_file)
+
 
         if profile:
             # Set the AWS credentials profile to use

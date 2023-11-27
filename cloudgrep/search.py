@@ -5,9 +5,15 @@ import logging
 import gzip
 import zipfile
 import os
-
+import yara
 
 class Search:
+
+    def init(self) -> None:
+        # Statically compile yara so we only have to compile it once
+        yara.compile(filepaths={"yara_rules.yar": "yara_rules.yar"})
+        
+
     def get_all_strings_line(self, file_path: str) -> List[str]:
         """Get all the strings from a file line by line
         We do this instead of f.readlines() as this supports binary files too
@@ -51,4 +57,19 @@ class Search:
                         print(line)
                     matched = True
 
+        return matched
+
+    def yara_scan_file(self, file_name: str, key_name: str, yara_rules: str, hide_filenames: bool) -> bool:
+        """Yara scan of the file"""
+        matched = False
+        logging.info(f"Yara scanning {file_name} for {yara_rules}")
+        rules = yara.compile(source=yara_rules)
+        matches = rules.match(file_name)
+        if matches:
+            for match in matches:
+                if not hide_filenames:
+                    print(f"{key_name}: {match}")
+                else:
+                    print(match)
+                matched = True
         return matched
