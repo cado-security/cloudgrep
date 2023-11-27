@@ -7,12 +7,11 @@ import zipfile
 import os
 import yara
 
-class Search:
 
+class Search:
     def init(self) -> None:
         # Statically compile yara so we only have to compile it once
         yara.compile(filepaths={"yara_rules.yar": "yara_rules.yar"})
-        
 
     def get_all_strings_line(self, file_path: str) -> List[str]:
         """Get all the strings from a file line by line
@@ -25,6 +24,16 @@ class Search:
             string_list = b.split("\r")
             return string_list
 
+    def search_line(key_name: str, search: str, hide_filenames: bool, line: str) -> bool:
+        """Regex search of the line"""
+        if re.search(search, line):
+            if not hide_filenames:
+                print(f"{key_name}: {line}")
+            else:
+                print(line)
+            return True
+        return False
+
     def search_file(self, file_name: str, key_name: str, search: str, hide_filenames: bool) -> bool:
         """Regex search of the file line by line"""
         matched = False
@@ -32,9 +41,7 @@ class Search:
         if key_name.endswith(".gz"):
             with gzip.open(file_name, "rt") as f:
                 for line in f:
-                    if re.search(search, line):
-                        print(f"{key_name}: {line}")
-                        matched = True
+                    matched = self.search_line(key_name, search, hide_filenames, line)
         elif key_name.endswith(".zip"):
             with tempfile.TemporaryDirectory() as tempdir:
                 with zipfile.ZipFile(file_name, "r") as zf:
@@ -45,17 +52,11 @@ class Search:
                         if os.path.isfile(os.path.join(tempdir, filename)):
                             with open(os.path.join(tempdir, filename)) as f:
                                 for line in f:
-                                    if re.search(search, line):
-                                        print(f"{key_name}/{filename}: {line}")
-                                        matched = True
+                                    matched = self.search_line(key_name + "/" + filename, search, hide_filenames, line)
         else:
             for line in self.get_all_strings_line(file_name):
                 if re.search(search, line):
-                    if not hide_filenames:
-                        print(f"{key_name}: {line}")
-                    else:
-                        print(line)
-                    matched = True
+                    matched = self.search_line(key_name, search, hide_filenames, line)
 
         return matched
 
@@ -63,13 +64,13 @@ class Search:
         """Yara scan of the file"""
         matched = False
         logging.info(f"Yara scanning {file_name} for {yara_rules}")
-        rules = yara.compile(source=yara_rules)
-        matches = rules.match(file_name)
+        global YARA_RULES
+        matches = YARA_RULES.match(file_name)
         if matches:
             for match in matches:
                 if not hide_filenames:
-                    print(f"{key_name}: {match}")
+                    print(f"{key_name}: {match.rule} : {match.strings}")
                 else:
-                    print(match)
+                    print(f"{match.rule} : {match.strings}")
                 matched = True
         return matched

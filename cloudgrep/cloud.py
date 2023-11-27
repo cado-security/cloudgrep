@@ -10,10 +10,13 @@ import tempfile
 from typing import Iterator, Optional, List
 import logging
 from cloudgrep.search import Search
+import yara
 
 
 class Cloud:
-    def download_from_s3_multithread(self, bucket: str, files: List[str], query: str, hide_filenames: bool) -> int:
+    def download_from_s3_multithread(
+        self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_file: str
+    ) -> int:
         """Use ThreadPoolExecutor and boto3 to download every file in the bucket from s3
         Returns number of matched files"""
         client_config = botocore.config.Config(

@@ -1,0 +1,7 @@
+rule error
+{
+    strings:
+        $error = "ERROR"
+    condition:
+        $error
+}
