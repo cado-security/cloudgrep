@@ -9,6 +9,9 @@ from google.cloud import storage  # type: ignore
 import timeout_decorator
 from moto import mock_s3
 from datetime import datetime
+from unittest.mock import patch
+import yara
+from io import StringIO
 
 from cloudgrep.cloud import Cloud
 from cloudgrep.search import Search
@@ -20,9 +23,6 @@ BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class CloudGrepTests(unittest.TestCase):
     """Tests for Cloud Grep"""
-
-    def test_true(self) -> None:
-        self.assertEqual(1, 1)
 
     def test_weird_files(self) -> None:
         for filename in os.listdir(f"{BASE_PATH}/data/"):
@@ -115,3 +115,23 @@ class CloudGrepTests(unittest.TestCase):
         queries = CloudGrep().load_queries(file)
         self.assertIsInstance(queries, str)
         self.assertEqual(queries, "query1|query2|query3")
+
+    # Given a valid file name, key name, and yara rules, the method should successfully match the file against the rules and print only the rule name and matched strings if hide_filenames is True.
+    def test_yara(self):
+        # Arrange
+        search = Search()
+        file_name = "valid_file.txt"
+        key_name = "key_name"
+        hide_filenames = True
+        yara_rules = yara.compile(source='rule rule_name {strings: $a = "get" nocase wide ascii condition: $a}')
+        with open(file_name, "w") as f:
+            f.write("one\nget stuff\nthree")
+    
+        # Act
+        with patch('sys.stdout', new=StringIO()) as fake_out:
+            matched = search.yara_scan_file(file_name, key_name, hide_filenames, yara_rules)
+            output = fake_out.getvalue().strip()
+    
+        # Assert
+        self.assertTrue(matched)
+        self.assertEqual(output, "rule_name : [$a]")
