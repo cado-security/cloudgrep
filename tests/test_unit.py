@@ -10,7 +10,7 @@ import timeout_decorator
 from moto import mock_s3
 from datetime import datetime
 from unittest.mock import patch
-import yara # type: ignore
+import yara  # type: ignore
 from io import StringIO
 
 from cloudgrep.cloud import Cloud

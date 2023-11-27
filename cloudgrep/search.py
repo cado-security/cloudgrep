@@ -6,6 +6,7 @@ import gzip
 import zipfile
 import os
 
+
 class Search:
     def get_all_strings_line(self, file_path: str) -> List[str]:
         """Get all the strings from a file line by line
