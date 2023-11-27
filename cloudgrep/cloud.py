@@ -11,6 +11,7 @@ from typing import Iterator, Optional, List
 import logging
 from cloudgrep.search import Search
 
+
 class Cloud:
     def download_from_s3_multithread(
         self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_rules: any

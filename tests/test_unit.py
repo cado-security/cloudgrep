@@ -126,12 +126,12 @@ class CloudGrepTests(unittest.TestCase):
         yara_rules = yara.compile(source='rule rule_name {strings: $a = "get" nocase wide ascii condition: $a}')
         with open(file_name, "w") as f:
             f.write("one\nget stuff\nthree")
-    
+
         # Act
-        with patch('sys.stdout', new=StringIO()) as fake_out:
+        with patch("sys.stdout", new=StringIO()) as fake_out:
             matched = search.yara_scan_file(file_name, key_name, hide_filenames, yara_rules)
             output = fake_out.getvalue().strip()
-    
+
         # Assert
         self.assertTrue(matched)
         self.assertEqual(output, "rule_name : [$a]")

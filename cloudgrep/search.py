@@ -9,7 +9,6 @@ import yara
 
 
 class Search:
-
     def get_all_strings_line(self, file_path: str) -> List[str]:
         """Get all the strings from a file line by line
         We do this instead of f.readlines() as this supports binary files too
@@ -30,7 +29,7 @@ class Search:
                 print(line)
             return True
         return False
-    
+
     def yara_scan_file(self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: any) -> bool:
         matched = False
         matches = yara_rules.match(file_name)
@@ -47,7 +46,7 @@ class Search:
         """Regex search of the file line by line"""
         matched = False
         logging.info(f"Searching {file_name} for {search}")
-        
+
         if yara_rules:
             matched = self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules)
         else:

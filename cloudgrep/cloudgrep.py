@@ -6,6 +6,7 @@ import logging
 from cloudgrep.cloud import Cloud
 import yara
 
+
 class CloudGrep:
     def load_queries(self, file: str) -> str:
         """Load in a list of queries from a file"""
