@@ -1,11 +1,11 @@
 import tempfile
 import re
-from typing import List
+from typing import List, Any
 import logging
 import gzip
 import zipfile
 import os
-import yara
+import yara  # type: ignore
 
 
 class Search:
@@ -30,7 +30,7 @@ class Search:
             return True
         return False
 
-    def yara_scan_file(self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: any) -> bool:
+    def yara_scan_file(self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: Any) -> bool:  # type: ignore
         matched = False
         matches = yara_rules.match(file_name)
         if matches:
@@ -42,7 +42,7 @@ class Search:
                 matched = True
         return matched
 
-    def search_file(self, file_name: str, key_name: str, search: str, hide_filenames: bool, yara_rules: any) -> bool:
+    def search_file(self, file_name: str, key_name: str, search: str, hide_filenames: bool, yara_rules: Any) -> bool:
         """Regex search of the file line by line"""
         matched = False
         logging.info(f"Searching {file_name} for {search}")

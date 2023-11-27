@@ -117,7 +117,7 @@ class CloudGrepTests(unittest.TestCase):
         self.assertEqual(queries, "query1|query2|query3")
 
     # Given a valid file name, key name, and yara rules, the method should successfully match the file against the rules and print only the rule name and matched strings if hide_filenames is True.
-    def test_yara(self):
+    def test_yara(self) -> None:
         # Arrange
         search = Search()
         file_name = "valid_file.txt"

@@ -4,7 +4,7 @@ from dateutil.parser import parse
 from typing import Optional
 import logging
 from cloudgrep.cloud import Cloud
-import yara
+import yara  # type: ignore
 
 
 class CloudGrep:
