@@ -4,6 +4,7 @@ from dateutil.parser import parse
 from typing import Optional
 import logging
 from cloudgrep.cloud import Cloud
+import yara  # type: ignore
 
 
 class CloudGrep:
@@ -20,6 +21,7 @@ class CloudGrep:
         google_bucket: Optional[str],
         query: str,
         file: Optional[str],
+        yara_file: Optional[str],
         file_size: int,
         prefix: Optional[str] = None,
         key_contains: Optional[str] = None,
@@ -32,6 +34,12 @@ class CloudGrep:
         if not query and file:
             logging.info(f"Loading queries in from {file}")
             query = self.load_queries(file)
+
+        if yara_file:
+            logging.info(f"Loading yara rules from {yara_file}")
+            yara_rules = yara.compile(filepath=yara_file)
+        else:
+            yara_rules = None
 
         if profile:
             # Set the AWS credentials profile to use
@@ -55,7 +63,7 @@ class CloudGrep:
                 f"Bucket is in region: {region['LocationConstraint']} : Search from the same region to avoid egress charges."
             )
             print(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
-            Cloud().download_from_s3_multithread(bucket, matching_keys, query, hide_filenames)
+            Cloud().download_from_s3_multithread(bucket, matching_keys, query, hide_filenames, yara_rules)
 
         if account_name and container_name:
             matching_keys = list(
@@ -64,7 +72,7 @@ class CloudGrep:
                 )
             )
             print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
-            Cloud().download_from_azure(account_name, container_name, matching_keys, query, hide_filenames)
+            Cloud().download_from_azure(account_name, container_name, matching_keys, query, hide_filenames, yara_rules)
 
         if google_bucket:
             matching_keys = list(
@@ -73,4 +81,4 @@ class CloudGrep:
 
             print(f"Searching {len(matching_keys)} files in {google_bucket} for {query}...")
 
-            Cloud().download_from_google(google_bucket, matching_keys, query, hide_filenames)
+            Cloud().download_from_google(google_bucket, matching_keys, query, hide_filenames, yara_rules)

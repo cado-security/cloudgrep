@@ -1,0 +1,7 @@
+rule get
+{
+    strings:
+        $get = "GET" nocase wide ascii
+    condition:
+        $get
+}

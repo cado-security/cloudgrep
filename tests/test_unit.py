@@ -9,6 +9,9 @@ from google.cloud import storage  # type: ignore
 import timeout_decorator
 from moto import mock_s3
 from datetime import datetime
+from unittest.mock import patch
+import yara  # type: ignore
+from io import StringIO
 
 from cloudgrep.cloud import Cloud
 from cloudgrep.search import Search
@@ -21,9 +24,6 @@ BASE_PATH = os.path.dirname(os.path.realpath(__file__))
 class CloudGrepTests(unittest.TestCase):
     """Tests for Cloud Grep"""
 
-    def test_true(self) -> None:
-        self.assertEqual(1, 1)
-
     def test_weird_files(self) -> None:
         for filename in os.listdir(f"{BASE_PATH}/data/"):
             # Just checks we don't crash on any files
@@ -33,12 +33,12 @@ class CloudGrepTests(unittest.TestCase):
 
     def test_gzip(self) -> None:
         # Get lines from .gz compressed file
-        found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False)
+        found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None)
         self.assertTrue(found)
 
     def test_zip(self) -> None:
         # Get lines from .zip compressed file
-        found = Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False)
+        found = Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False, None)
         self.assertTrue(found)
 
     @timeout_decorator.timeout(5)  # Normally takes around 3 seconds to run in github actions
@@ -64,7 +64,7 @@ class CloudGrepTests(unittest.TestCase):
         assert len(matching_keys) == 3
 
         print(f"Checking we only get one search hit in: {matching_keys}")
-        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
+        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)
         assert hits == 1
 
         print("Testing with multiple queries from a file")
@@ -72,7 +72,7 @@ class CloudGrepTests(unittest.TestCase):
         with open(file, "w") as f:
             f.write(f"query1\n{_QUERY}\nquery3")
         multi_query = CloudGrep().load_queries(file)
-        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, multi_query, False)
+        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, multi_query, False, None)
 
         # Upload a log 10 000 times and see how long it takes
         print("Uploading large number of logs")
@@ -81,7 +81,7 @@ class CloudGrepTests(unittest.TestCase):
                 s3.upload_fileobj(data, _BUCKET, str(x))
 
         print("Searching")
-        Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False)
+        Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)
         print("Searched")
 
     def test_object_not_empty_and_size_greater_than_file_size(self) -> None:
@@ -115,3 +115,23 @@ class CloudGrepTests(unittest.TestCase):
         queries = CloudGrep().load_queries(file)
         self.assertIsInstance(queries, str)
         self.assertEqual(queries, "query1|query2|query3")
+
+    # Given a valid file name, key name, and yara rules, the method should successfully match the file against the rules and print only the rule name and matched strings if hide_filenames is True.
+    def test_yara(self) -> None:
+        # Arrange
+        search = Search()
+        file_name = "valid_file.txt"
+        key_name = "key_name"
+        hide_filenames = True
+        yara_rules = yara.compile(source='rule rule_name {strings: $a = "get" nocase wide ascii condition: $a}')
+        with open(file_name, "w") as f:
+            f.write("one\nget stuff\nthree")
+
+        # Act
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            matched = search.yara_scan_file(file_name, key_name, hide_filenames, yara_rules)
+            output = fake_out.getvalue().strip()
+
+        # Assert
+        self.assertTrue(matched)
+        self.assertEqual(output, "rule_name : [$a]")

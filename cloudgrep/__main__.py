@@ -24,6 +24,12 @@ def main() -> None:
         required=False,
     )
     parser.add_argument(
+        "-y",
+        "--yara",
+        help="File containing Yara rules to scan files.",
+        required=False,
+    )
+    parser.add_argument(
         "-p",
         "--prefix",
         help="Optionally filter on the start of the Object name. E.g. logs/",
@@ -80,7 +86,8 @@ def main() -> None:
         args["google_bucket"],
         args["query"],
         args["file"],
-        args["file_size"],
+        args["yara"],
+        int(args["file_size"]),
         args["prefix"],
         args["filename"],
         args["start_date"],
