@@ -30,6 +30,18 @@ class Search:
                 print(line)
             return True
         return False
+    
+    def yara_scan_file(self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: any) -> bool:
+        matched = False
+        matches = yara_rules.match(file_name)
+        if matches:
+            for match in matches:
+                if not hide_filenames:
+                    print(f"{key_name}: {match.rule} : {match.strings}")
+                else:
+                    print(f"{match.rule} : {match.strings}")
+                matched = True
+        return matched
 
     def search_file(self, file_name: str, key_name: str, search: str, hide_filenames: bool, yara_rules: any) -> bool:
         """Regex search of the file line by line"""
@@ -37,16 +49,8 @@ class Search:
         logging.info(f"Searching {file_name} for {search}")
         
         if yara_rules:
-            matches = yara_rules.match(file_name)
-            if matches:
-                for match in matches:
-                    if not hide_filenames:
-                        print(f"{key_name}: {match.rule} : {match.strings}")
-                    else:
-                        print(f"{match.rule} : {match.strings}")
-                    matched = True
+            matched = self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules)
         else:
-        
             if key_name.endswith(".gz"):
                 with gzip.open(file_name, "rt") as f:
                     for line in f:
