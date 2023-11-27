@@ -37,7 +37,6 @@ class Search:
         logging.info(f"Searching {file_name} for {search}")
         
         if yara_rules:
-            print("yara rules")
             matches = yara_rules.match(file_name)
             if matches:
                 for match in matches:

@@ -35,11 +35,11 @@ class Cloud:
                     matched_count += 1
 
         # Use ThreadPoolExecutor to download the files
-        # with concurrent.futures.ThreadPoolExecutor() as executor:  # type: ignore
-        #    executor.map(download_file, files)
+        with concurrent.futures.ThreadPoolExecutor() as executor:  # type: ignore
+            executor.map(download_file, files)
         # For debugging, single thread:
-        for file in files:
-            download_file(file)
+        # for file in files:
+        #    download_file(file)
 
         return matched_count
 

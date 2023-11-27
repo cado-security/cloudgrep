@@ -1,7 +1,7 @@
-rule error
+rule get
 {
     strings:
-        $error = "ERROR"
+        $get = "GET" nocase wide ascii
     condition:
-        $error
+        $get
 }
