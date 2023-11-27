@@ -50,6 +50,7 @@ class Search:
             if key_name.endswith(".gz"):
                 with gzip.open(file_name, "rt") as f:
                     for line in f:
+                        print(f"Gz Searching: {line} for {search}")
                         matched = self.search_line(key_name, search, hide_filenames, line)
             elif key_name.endswith(".zip"):
                 with tempfile.TemporaryDirectory() as tempdir:
