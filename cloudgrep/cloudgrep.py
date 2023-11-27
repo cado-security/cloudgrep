@@ -6,10 +6,6 @@ import logging
 from cloudgrep.cloud import Cloud
 import yara
 
-# Used to globally store the compiled yara rules
-YARA_RULES = None
-
-
 class CloudGrep:
     def load_queries(self, file: str) -> str:
         """Load in a list of queries from a file"""
@@ -39,8 +35,10 @@ class CloudGrep:
             query = self.load_queries(file)
 
         if yara_file:
-            global YARA_RULES  # TODO: Move all settings to a Settings class variable
-            YARA_RULES = yara.compile(filepath=yara_file)
+            logging.info(f"Loading yara rules from {yara_file}")
+            yara_rules = yara.compile(filepath=yara_file)
+        else:
+            yara_rules = None
 
         if profile:
             # Set the AWS credentials profile to use
@@ -64,7 +62,7 @@ class CloudGrep:
                 f"Bucket is in region: {region['LocationConstraint']} : Search from the same region to avoid egress charges."
             )
             print(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
-            Cloud().download_from_s3_multithread(bucket, matching_keys, query, hide_filenames, yara_file)
+            Cloud().download_from_s3_multithread(bucket, matching_keys, query, hide_filenames, yara_rules)
 
         if account_name and container_name:
             matching_keys = list(
