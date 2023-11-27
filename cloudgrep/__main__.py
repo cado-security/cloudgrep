@@ -66,7 +66,7 @@ def main() -> None:
     )
     parser.add_argument("-d", "--debug", help="Enable Debug logging. ", action="store_true", required=False)
     parser.add_argument(
-        "-hf", "--hide_filenames", help="Dont show matching filesnames. ", action="store_true", required=False
+        "-hf", "--hide_filenames", help="Dont show matching filenames. ", action="store_true", required=False
     )
     args = vars(parser.parse_args())
 
