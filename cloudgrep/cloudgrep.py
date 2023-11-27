@@ -72,7 +72,7 @@ class CloudGrep:
                 )
             )
             print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
-            Cloud().download_from_azure(account_name, container_name, matching_keys, query, hide_filenames)
+            Cloud().download_from_azure(account_name, container_name, matching_keys, query, hide_filenames, yara_rules)
 
         if google_bucket:
             matching_keys = list(
@@ -81,4 +81,4 @@ class CloudGrep:
 
             print(f"Searching {len(matching_keys)} files in {google_bucket} for {query}...")
 
-            Cloud().download_from_google(google_bucket, matching_keys, query, hide_filenames)
+            Cloud().download_from_google(google_bucket, matching_keys, query, hide_filenames, yara_rules)

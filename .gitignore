@@ -160,3 +160,4 @@ cython_debug/
 
 queries.txt
 .vscode/settings.json
+valid_file.txt

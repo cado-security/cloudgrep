@@ -45,7 +45,13 @@ class Cloud:
         return matched_count
 
     def download_from_azure(
-        self, account_name: str, container_name: str, files: List[str], query: str, hide_filenames: bool
+        self,
+        account_name: str,
+        container_name: str,
+        files: List[str],
+        query: str,
+        hide_filenames: bool,
+        yara_rules: any,
     ) -> int:
         """Download every file in the container from azure
         Returns number of matched files"""
@@ -65,7 +71,7 @@ class Cloud:
                     with open(tmp.name, "wb") as my_blob:
                         blob_data = blob_client.download_blob()
                         blob_data.readinto(my_blob)
-                    matched = Search().search_file(tmp.name, key, query, hide_filenames)
+                    matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules)
                     if matched:
                         nonlocal matched_count
                         matched_count += 1
@@ -78,7 +84,9 @@ class Cloud:
 
         return matched_count
 
-    def download_from_google(self, bucket: str, files: List[str], query: str, hide_filenames: bool) -> int:
+    def download_from_google(
+        self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_rules: any
+    ) -> int:
         """Download every file in the bucket from google
         Returns number of matched files"""
 
@@ -91,7 +99,7 @@ class Cloud:
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
                 blob = bucket_gcp.get_blob(key)
                 blob.download_to_filename(tmp.name)
-                matched = Search().search_file(tmp.name, key, query, hide_filenames)
+                matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules)
                 if matched:
                     nonlocal matched_count
                     matched_count += 1
