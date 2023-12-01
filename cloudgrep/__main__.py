@@ -5,6 +5,9 @@ import sys
 
 VERSION = "1.0.4"
 
+# Define a custom argument type for a list of strings
+def list_of_strings(arg):
+    return arg.split(',')
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -15,7 +18,10 @@ def main() -> None:
     parser.add_argument("-cn", "--container-name", help="Azure Container Name to Search", required=False)
     parser.add_argument("-gb", "--google-bucket", help="Google Cloud Bucket to Search", required=False)
     parser.add_argument(
-        "-q", "--query", help="Text to search for. Will be parsed as a Regex. E.g. example.com", required=False
+        "-q",
+        "--query",
+        help="Text to search for. Will be parsed as a Regex. E.g. example.com",
+        required=False
     )
     parser.add_argument(
         "-v",
@@ -37,7 +43,10 @@ def main() -> None:
         default="",
     )
     parser.add_argument(
-        "-f", "--filename", help="Optionally filter on Objects that match a keyword. E.g. .log.gz ", required=False
+        "-f",
+        "--filename",
+        help="Optionally filter on Objects that match a keyword. E.g. .log.gz ",
+        required=False
     )
     parser.add_argument(
         "-s",
@@ -64,9 +73,38 @@ def main() -> None:
         help="Set an AWS profile to use. E.g. default, dev, prod.",
         required=False,
     )
-    parser.add_argument("-d", "--debug", help="Enable Debug logging. ", action="store_true", required=False)
     parser.add_argument(
-        "-hf", "--hide_filenames", help="Dont show matching filenames. ", action="store_true", required=False
+        "-d",
+        "--debug",
+        help="Enable Debug logging. ",
+        action="store_true",
+        required=False
+    )
+    parser.add_argument(
+        "-hf",
+        "--hide_filenames",
+        help="Dont show matching filenames. ",
+        action="store_true",
+        required=False
+    )
+    parser.add_argument(
+        "-lt",
+        "--log_type",
+        help="Return individual matching log entries based on pre-defined log types, otherwise custom log_format and log_properties can be used. E.g. cloudtrail. ",
+        required=False
+    )
+    parser.add_argument(
+        "-lf",
+        "--log_format",
+        help="Define custom log format of raw file to parse before applying search logic. Used if --log_type is not defined. E.g. json. ",
+        required=False
+    )
+    parser.add_argument(
+        "-lp",
+        "--log_properties",
+        type=list_of_strings,
+        help="Define custom list of properties to traverse to dynamically extract final list of log records. Used if --log_type is not defined. E.g. [""Records""]. ",
+        required=False
     )
     args = vars(parser.parse_args())
 
@@ -77,6 +115,7 @@ def main() -> None:
     if args["debug"]:
         logging.basicConfig(format="[%(asctime)s]:[%(levelname)s] - %(message)s", level=logging.INFO)
     else:
+        logging.basicConfig(format="[%(asctime)s] - %(message)s", level=logging.WARNING)
         logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
 
     CloudGrep().search(
@@ -93,6 +132,9 @@ def main() -> None:
         args["start_date"],
         args["end_date"],
         args["hide_filenames"],
+        args["log_type"],
+        args["log_format"],
+        args["log_properties"],
         args["profile"],
     )
 

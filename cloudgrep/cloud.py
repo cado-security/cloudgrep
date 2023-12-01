@@ -14,7 +14,14 @@ from cloudgrep.search import Search
 
 class Cloud:
     def download_from_s3_multithread(
-        self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_rules: Any
+        self,
+        bucket: str,
+        files: List[str],
+        query: str,
+        hide_filenames: bool,
+        yara_rules: Any,
+        log_format: str,
+        log_properties: Optional[list[str]] = None,
     ) -> int:
         """Use ThreadPoolExecutor and boto3 to download every file in the bucket from s3
         Returns number of matched files"""
@@ -30,7 +37,7 @@ class Cloud:
             with tempfile.NamedTemporaryFile() as tmp:
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
                 s3.download_file(bucket, key, tmp.name)
-                matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules)
+                matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties)
                 if matched:
                     nonlocal matched_count
                     matched_count += 1
@@ -38,7 +45,7 @@ class Cloud:
         # Use ThreadPoolExecutor to download the files
         with concurrent.futures.ThreadPoolExecutor() as executor:  # type: ignore
             executor.map(download_file, files)
-        # For debugging, single thread:
+        # For logging, single thread:
         # for file in files:
         #    download_file(file)
 
@@ -52,6 +59,8 @@ class Cloud:
         query: str,
         hide_filenames: bool,
         yara_rules: Any,
+        log_format: str,
+        log_properties: Optional[list[str]] = None,
     ) -> int:
         """Download every file in the container from azure
         Returns number of matched files"""
@@ -71,7 +80,7 @@ class Cloud:
                     with open(tmp.name, "wb") as my_blob:
                         blob_data = blob_client.download_blob()
                         blob_data.readinto(my_blob)
-                    matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules)
+                    matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties)
                     if matched:
                         nonlocal matched_count
                         matched_count += 1
@@ -85,7 +94,14 @@ class Cloud:
         return matched_count
 
     def download_from_google(
-        self, bucket: str, files: List[str], query: str, hide_filenames: bool, yara_rules: Any
+        self,
+        bucket: str,
+        files: List[str],
+        query: str,
+        hide_filenames: bool,
+        yara_rules: Any,
+        log_format: str,
+        log_properties: Optional[list[str]] = None,
     ) -> int:
         """Download every file in the bucket from google
         Returns number of matched files"""
@@ -99,7 +115,7 @@ class Cloud:
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
                 blob = bucket_gcp.get_blob(key)
                 blob.download_to_filename(tmp.name)
-                matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules)
+                matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties)
                 if matched:
                     nonlocal matched_count
                     matched_count += 1
