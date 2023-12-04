@@ -21,7 +21,7 @@ class Cloud:
         hide_filenames: bool,
         yara_rules: Any,
         log_format: Optional[str] = None,
-        log_properties: Optional[list[str]] = None,
+        log_properties: List[str] = [],
         json_output: Optional[bool] = False,
     ) -> int:
         """Use ThreadPoolExecutor and boto3 to download every file in the bucket from s3
@@ -63,7 +63,7 @@ class Cloud:
         hide_filenames: bool,
         yara_rules: Any,
         log_format: str,
-        log_properties: Optional[list[str]] = None,
+        log_properties: List[str] = [],
         json_output: Optional[bool] = False,
     ) -> int:
         """Download every file in the container from azure
@@ -107,7 +107,7 @@ class Cloud:
         hide_filenames: bool,
         yara_rules: Any,
         log_format: str,
-        log_properties: Optional[list[str]] = None,
+        log_properties: List[str] = [],
         json_output: Optional[bool] = False,
     ) -> int:
         """Download every file in the bucket from google

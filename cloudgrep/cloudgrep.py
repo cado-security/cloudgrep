@@ -5,7 +5,7 @@ from typing import Optional
 import logging
 from cloudgrep.cloud import Cloud
 
-# import yara  # type: ignore
+import yara  # type: ignore
 
 
 class CloudGrep:
@@ -37,7 +37,7 @@ class CloudGrep:
     ) -> None:
         # load in a list of queries from a file
         if not query and file:
-            logging.log(f"Loading queries in from {file}")
+            logging.debug(f"Loading queries in from {file}")
             query = self.load_queries(file)
 
         # Set log_format and log_properties values based on potential log_type input argument
@@ -52,7 +52,7 @@ class CloudGrep:
                     )
 
         if yara_file:
-            logging.log(f"Loading yara rules from {yara_file}")
+            logging.debug(f"Loading yara rules from {yara_file}")
             yara_rules = yara.compile(filepath=yara_file)
         else:
             yara_rules = None

@@ -21,7 +21,7 @@ class Search:
             string_list = b.split("\r")
             return string_list
 
-    def print_match(self, matched_line_dict: dict, hide_filenames: bool, json_output: bool) -> None:
+    def print_match(self, matched_line_dict: dict, hide_filenames: bool, json_output: Optional[bool]) -> None:
         """Print matched line"""
         if json_output:
             if hide_filenames:
@@ -49,9 +49,9 @@ class Search:
         search: str,
         hide_filenames: bool,
         log_format: Optional[str] = None,
-        log_properties: Optional[list[str]] = None,
+        log_properties: List[str] = [],
         json_output: Optional[bool] = False,
-    ):
+    ) -> None:
         """Regex search of each log record in input line"""
         # Parse input line based on defined format.
         match log_format:
@@ -60,7 +60,7 @@ class Search:
                     line_parsed = json.loads(line)
                 except json.JSONDecodeError:
                     logging.error(f"Invalid JSON in line: {line}")
-                    return
+                    return None
             case "csv":
                 line_parsed = csv.DictReader(line)
             case _:
