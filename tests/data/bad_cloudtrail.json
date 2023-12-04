@@ -1,0 +1,26 @@
+{"Records": [{
+    "eventVersion": "1.08",
+    "userIdentity": {
+        "type": "IAMUser",
+        "principalId": "EXAMPLE6E4XEGITWATV6R",
+        "arn": "arn:aws:iam::777788889999:user/Nikki",
+        "accountId": "777788889999",
+        "accessKeyId": "AKIAI44QH8DHBEXAMPLE",
+        "userName": "Nikki",
+        "sessionContext": {
+            "sessionIssuer": {},
+            "webIdFederationData": {},
+            "attributes": {
+                "creationDate": "2023-07-19T21:11:57Z",
+                "mfaAuthenticated": "false"
+            }
+        }
+    },
+    "eventTime": "2023-07-19T21:14:20Z",
+    "eventSource": "ec2.amazonaws.com",
+    "eventName": "StopInstances",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "192.0.2.0",
+    "userAgent": "aws-cli/2.13.5 Python/3.11.4 Linux/4.14.255-314-253.539.amzn2.x86_64 exec-env/CloudShell exe/x86_64.amzn.2 prompt/off command/ec2.stop-instances",
+    "requestParameters": {
+        "instancesSet": {

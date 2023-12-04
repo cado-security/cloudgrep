@@ -135,7 +135,7 @@ class CloudGrepTests(unittest.TestCase):
 
         # Assert
         self.assertTrue(matched)
-        self.assertEqual(output, "{'key_name': 'key_name', 'match_rule': 'rule_name', 'match_strings': [$a]}")
+        self.assertEqual(output, "{'match_rule': 'rule_name', 'match_strings': [$a]}")
 
 
     # Unit test to check that all output is json parseable
@@ -146,6 +146,27 @@ class CloudGrepTests(unittest.TestCase):
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
             found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None)
+            output = fake_out.getvalue().strip()
+
+        # Assert we can parse the output
+        self.assertTrue(json.loads(output))
+
+    # Unit test to search ./data/cloudtrail.json and ./data/bad_cloudtrail.json in cloudtrail log format
+    def test_search_cloudtrail(self) -> None:
+        # Arrange
+        search = Search()
+        log_format = "json"
+        log_properties = ["Records"]
+        with open(f"{BASE_PATH}/data/cloudtrail.json", "r") as f:
+            cloudtrail = json.load(f)
+
+        # Act
+        # Test it doesnt crash on bad json
+        found = Search().search_file(f"{BASE_PATH}/data/bad_cloudtrail.json", "bad_cloudtrail.json", "Running on machine", False, None, log_format, log_properties)
+        found = Search().search_file(f"{BASE_PATH}/data/cloudtrail.json", "cloudtrail.json", "Running on machine", False, None, log_format, log_properties)
+        # Get the output for a hit
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            found = Search().search_file(f"{BASE_PATH}/data/cloudtrail_singleline.json", "cloudtrail_singleline.json", "SignatureVersion", False, None, log_format, log_properties)
             output = fake_out.getvalue().strip()
 
         # Assert we can parse the output

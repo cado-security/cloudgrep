@@ -9,7 +9,7 @@ import json
 import csv
 
 class Search:
-    def get_all_strings_line(self, file_path: str) -> list[str]:
+    def get_all_strings_line(self, file_path: str) -> List[str]:
         """Get all the strings from a file line by line
         We do this instead of f.readlines() as this supports binary files too
         """
@@ -20,20 +20,33 @@ class Search:
             string_list = b.split("\r")
             return string_list
 
+    def print_match(self, matched_line_dict: dict, hide_filenames: bool) -> None:
+        """Print matched line"""
+        if hide_filenames:
+            matched_line_dict.pop("key_name")
+        try:
+            print(json.dumps(matched_line_dict))
+        except TypeError:
+            print(str(matched_line_dict))
+
     def search_logs(
         self,
         line: str,
         key_name: str,
         search: str,
         hide_filenames: bool,
-        log_format: str,
+        log_format: Optional[str] = None,
         log_properties: Optional[list[str]] = None,
     ):
         """Regex search of each log record in input line"""
         # Parse input line based on defined format.
         match log_format:
             case "json":
-                line_parsed = json.loads(line)
+                try:
+                    line_parsed = json.loads(line)
+                except json.JSONDecodeError:
+                    logging.error(f"Invalid JSON in line: {line}")
+                    return
             case "csv":
                 line_parsed = csv.DictReader(line)
             case _:
@@ -45,7 +58,8 @@ class Search:
         # Step into property/properties to get to final list of lines for per-line searching.
         if log_properties != None:
             for log_property in log_properties:
-                line_parsed = line_parsed[log_property]
+                if line_parsed:
+                    line_parsed = line_parsed.get(log_property, None)
 
         # Ensure line_parsed is iterable.
         if type(line_parsed) != list:
@@ -58,9 +72,7 @@ class Search:
                     "key_name": key_name,
                     "line" : record
                 }
-                if hide_filenames:
-                    matched_line_dict.pop("key_name")
-                print(json.dumps(matched_line_dict))
+                self.print_match(matched_line_dict, hide_filenames)
     
     def search_line(
         self,
@@ -80,9 +92,7 @@ class Search:
                     "key_name": key_name,
                     "line" : line
                 }
-                if hide_filenames:
-                    matched_line_dict.pop("key_name")
-                print(json.dumps(matched_line_dict))
+                self.print_match(matched_line_dict, hide_filenames)
             return True
         return False
 
@@ -96,9 +106,7 @@ class Search:
                     "match_rule": match.rule,
                     "match_strings": match.strings
                 }
-                if not hide_filenames:
-                    matched_line_dict.pop("key_name")
-                print(str(matched_line_dict))
+                self.print_match(matched_line_dict, hide_filenames)
                 matched = True
         return matched
 
