@@ -56,7 +56,7 @@ usage: cloudgrep.py [-h] [-b BUCKET] [-an ACCOUNT_NAME] [-cn CONTAINER_NAME] [-g
                     [-v FILE] [-y YARA] [-p PREFIX] [-f FILENAME] [-s START_DATE] [-e END_DATE] [-fs FILE_SIZE]
                     [-pr PROFILE] [-d] [-hf]
 
-CloudGrep searches is grep for cloud storage like S3 and Azure Storage. Version: 1.0.4
+CloudGrep searches is grep for cloud storage like S3 and Azure Storage. Version: 1.0.5
 
 options:
   -h, --help            show this help message and exit
