@@ -94,7 +94,7 @@ class Search:
         hide_filenames: bool,
         line: str,
         log_format: Optional[str],
-        log_properties: Optional[list[str]] = None,
+        log_properties: List[str]= [],
         json_output: Optional[bool] = False,
     ) -> bool:
         """Regex search of the line"""
@@ -125,7 +125,7 @@ class Search:
         hide_filenames: bool,
         yara_rules: Any,
         log_format: Optional[str] = None,
-        log_properties: Optional[list[str]] = None,
+        log_properties: List[str]= [],
         json_output: Optional[bool] = False,
     ) -> bool:
         """Regex search of the file line by line"""

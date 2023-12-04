@@ -4,6 +4,7 @@ from dateutil.parser import parse
 from typing import Optional
 import logging
 from cloudgrep.cloud import Cloud
+from typing import List
 
 import yara  # type: ignore
 
@@ -31,7 +32,7 @@ class CloudGrep:
         hide_filenames: bool = False,
         log_type: Optional[str] = None,
         log_format: Optional[str] = None,
-        log_properties: Optional[list[str]] = None,
+        log_properties: List[str]= [],
         profile: Optional[str] = None,
         json_output: Optional[bool] = False,
     ) -> None:

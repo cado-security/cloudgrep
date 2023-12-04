@@ -62,7 +62,7 @@ class Cloud:
         query: str,
         hide_filenames: bool,
         yara_rules: Any,
-        log_format: str,
+        log_format: Optional[str] = None,
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
     ) -> int:
@@ -106,7 +106,7 @@ class Cloud:
         query: str,
         hide_filenames: bool,
         yara_rules: Any,
-        log_format: str,
+        log_format: Optional[str] = None,
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
     ) -> int:
