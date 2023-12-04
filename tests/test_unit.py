@@ -12,6 +12,7 @@ from datetime import datetime
 from unittest.mock import patch
 import yara  # type: ignore
 from io import StringIO
+import json
 
 from cloudgrep.cloud import Cloud
 from cloudgrep.search import Search
@@ -135,3 +136,17 @@ class CloudGrepTests(unittest.TestCase):
         # Assert
         self.assertTrue(matched)
         self.assertEqual(output, "{'key_name': 'key_name', 'match_rule': 'rule_name', 'match_strings': [$a]}")
+
+
+    # Unit test to check that all output is json parseable
+    def test_json_output(self) -> None:
+        # Arrange
+        search = Search()
+        
+        # Act
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None)
+            output = fake_out.getvalue().strip()
+
+        # Assert we can parse the output
+        self.assertTrue(json.loads(output))
