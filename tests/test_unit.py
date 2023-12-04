@@ -163,8 +163,6 @@ class CloudGrepTests(unittest.TestCase):
         # Arrange
         log_format = "json"
         log_properties = ["Records"]
-        with open(f"{BASE_PATH}/data/cloudtrail.json", "r") as f:
-            cloudtrail = json.load(f)
 
         # Test it doesnt crash on bad json
         Search().search_file(
