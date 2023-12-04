@@ -129,7 +129,6 @@ class CloudGrepTests(unittest.TestCase):
     # Given a valid file name, key name, and yara rules, the method should successfully match the file against the rules and print only the rule name and matched strings if hide_filenames is True.
     def test_yara(self) -> None:
         # Arrange
-        search = Search()
         file_name = "valid_file.txt"
         key_name = "key_name"
         hide_filenames = True
@@ -139,7 +138,7 @@ class CloudGrepTests(unittest.TestCase):
 
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            matched = search.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, True)
+            matched = Search().yara_scan_file(file_name, key_name, hide_filenames, yara_rules, True)
             output = fake_out.getvalue().strip()
 
         # Assert
@@ -148,12 +147,10 @@ class CloudGrepTests(unittest.TestCase):
 
     # Unit test to check that all output is json parseable
     def test_json_output(self) -> None:
-        # Arrange
-        search = Search()
 
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            found = Search().search_file(
+            Search().search_file(
                 f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None, None, [], True
             )
             output = fake_out.getvalue().strip()
@@ -164,15 +161,13 @@ class CloudGrepTests(unittest.TestCase):
     # Unit test to search ./data/cloudtrail.json and ./data/bad_cloudtrail.json in cloudtrail log format
     def test_search_cloudtrail(self) -> None:
         # Arrange
-        search = Search()
         log_format = "json"
         log_properties = ["Records"]
         with open(f"{BASE_PATH}/data/cloudtrail.json", "r") as f:
             cloudtrail = json.load(f)
 
-        # Act
         # Test it doesnt crash on bad json
-        found = Search().search_file(
+        Search().search_file(
             f"{BASE_PATH}/data/bad_cloudtrail.json",
             "bad_cloudtrail.json",
             "Running on machine",
@@ -181,7 +176,7 @@ class CloudGrepTests(unittest.TestCase):
             log_format,
             log_properties,
         )
-        found = Search().search_file(
+        Search().search_file(
             f"{BASE_PATH}/data/cloudtrail.json",
             "cloudtrail.json",
             "Running on machine",
@@ -192,7 +187,7 @@ class CloudGrepTests(unittest.TestCase):
         )
         # Get the output for a hit
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            found = Search().search_file(
+            Search().search_file(
                 f"{BASE_PATH}/data/cloudtrail_singleline.json",
                 "cloudtrail_singleline.json",
                 "SignatureVersion",
