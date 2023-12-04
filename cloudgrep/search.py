@@ -8,6 +8,7 @@ import os
 import json
 import csv
 
+
 class Search:
     def get_all_strings_line(self, file_path: str) -> List[str]:
         """Get all the strings from a file line by line
@@ -32,10 +33,10 @@ class Search:
         else:
             line = ""
             if "line" in matched_line_dict:
-                line = matched_line_dict['line']
+                line = matched_line_dict["line"]
             if "match_rule" in matched_line_dict:
                 line = f"{matched_line_dict['match_rule']}: {matched_line_dict['match_strings']}"
-            
+
             if not hide_filenames:
                 print(f"{matched_line_dict['key_name']}: {line}")
             else:
@@ -63,7 +64,9 @@ class Search:
             case "csv":
                 line_parsed = csv.DictReader(line)
             case _:
-                logging.error(f"Invalid log_format value ('{log_format}') in switch statement in 'search_logs' function, so defaulting to 'json'.")
+                logging.error(
+                    f"Invalid log_format value ('{log_format}') in switch statement in 'search_logs' function, so defaulting to 'json'."
+                )
                 # Default to JSON format.
                 log_format = "json"
                 line_parsed = json.loads(line)
@@ -81,12 +84,9 @@ class Search:
         # Perform per-line searching.
         for record in line_parsed:
             if re.search(search, json.dumps(record)):
-                matched_line_dict = {
-                    "key_name": key_name,
-                    "line" : record
-                }
+                matched_line_dict = {"key_name": key_name, "line": record}
                 self.print_match(matched_line_dict, hide_filenames, json_output)
-    
+
     def search_line(
         self,
         key_name: str,
@@ -102,10 +102,7 @@ class Search:
             if log_format != None:
                 self.search_logs(line, key_name, search, hide_filenames, log_format, log_properties, json_output)
             else:
-                matched_line_dict = {
-                    "key_name": key_name,
-                    "line" : line
-                }
+                matched_line_dict = {"key_name": key_name, "line": line}
                 self.print_match(matched_line_dict, hide_filenames, json_output)
             return True
         return False
@@ -115,11 +112,7 @@ class Search:
         matches = yara_rules.match(file_name)
         if matches:
             for match in matches:
-                matched_line_dict = {
-                    "key_name": key_name,
-                    "match_rule": match.rule,
-                    "match_strings": match.strings
-                }
+                matched_line_dict = {"key_name": key_name, "match_rule": match.rule, "match_strings": match.strings}
                 self.print_match(matched_line_dict, hide_filenames, json_output)
                 matched = True
         return matched
@@ -145,7 +138,9 @@ class Search:
             if key_name.endswith(".gz"):
                 with gzip.open(file_name, "rt") as f:
                     for line in f:
-                        if self.search_line(key_name, search, hide_filenames, line, log_format, log_properties, json_output):
+                        if self.search_line(
+                            key_name, search, hide_filenames, line, log_format, log_properties, json_output
+                        ):
                             matched = True
             elif key_name.endswith(".zip"):
                 with tempfile.TemporaryDirectory() as tempdir:
@@ -157,11 +152,21 @@ class Search:
                             if os.path.isfile(os.path.join(tempdir, filename)):
                                 with open(os.path.join(tempdir, filename)) as f:
                                     for line in f:
-                                        if self.search_line("{key_name}/{filename}", search, hide_filenames, line, log_format, log_properties, json_output):
+                                        if self.search_line(
+                                            "{key_name}/{filename}",
+                                            search,
+                                            hide_filenames,
+                                            line,
+                                            log_format,
+                                            log_properties,
+                                            json_output,
+                                        ):
                                             matched = True
             else:
                 for line in self.get_all_strings_line(file_name):
-                    if self.search_line(key_name, search, hide_filenames, line, log_format, log_properties, json_output):
+                    if self.search_line(
+                        key_name, search, hide_filenames, line, log_format, log_properties, json_output
+                    ):
                         matched = True
 
         return matched

@@ -38,7 +38,9 @@ class Cloud:
             with tempfile.NamedTemporaryFile() as tmp:
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
                 s3.download_file(bucket, key, tmp.name)
-                matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output)
+                matched = Search().search_file(
+                    tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                )
                 if matched:
                     nonlocal matched_count
                     matched_count += 1
@@ -82,7 +84,9 @@ class Cloud:
                     with open(tmp.name, "wb") as my_blob:
                         blob_data = blob_client.download_blob()
                         blob_data.readinto(my_blob)
-                    matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output)
+                    matched = Search().search_file(
+                        tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                    )
                     if matched:
                         nonlocal matched_count
                         matched_count += 1
@@ -118,7 +122,9 @@ class Cloud:
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
                 blob = bucket_gcp.get_blob(key)
                 blob.download_to_filename(tmp.name)
-                matched = Search().search_file(tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output)
+                matched = Search().search_file(
+                    tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                )
                 if matched:
                     nonlocal matched_count
                     matched_count += 1

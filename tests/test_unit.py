@@ -137,15 +137,16 @@ class CloudGrepTests(unittest.TestCase):
         self.assertTrue(matched)
         self.assertEqual(output, "{'match_rule': 'rule_name', 'match_strings': [$a]}")
 
-
     # Unit test to check that all output is json parseable
     def test_json_output(self) -> None:
         # Arrange
         search = Search()
-        
+
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None, None, None, True)
+            found = Search().search_file(
+                f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None, None, None, True
+            )
             output = fake_out.getvalue().strip()
 
         # Assert we can parse the output
@@ -162,11 +163,36 @@ class CloudGrepTests(unittest.TestCase):
 
         # Act
         # Test it doesnt crash on bad json
-        found = Search().search_file(f"{BASE_PATH}/data/bad_cloudtrail.json", "bad_cloudtrail.json", "Running on machine", False, None, log_format, log_properties)
-        found = Search().search_file(f"{BASE_PATH}/data/cloudtrail.json", "cloudtrail.json", "Running on machine", False, None, log_format, log_properties)
+        found = Search().search_file(
+            f"{BASE_PATH}/data/bad_cloudtrail.json",
+            "bad_cloudtrail.json",
+            "Running on machine",
+            False,
+            None,
+            log_format,
+            log_properties,
+        )
+        found = Search().search_file(
+            f"{BASE_PATH}/data/cloudtrail.json",
+            "cloudtrail.json",
+            "Running on machine",
+            False,
+            None,
+            log_format,
+            log_properties,
+        )
         # Get the output for a hit
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            found = Search().search_file(f"{BASE_PATH}/data/cloudtrail_singleline.json", "cloudtrail_singleline.json", "SignatureVersion", False, None, log_format, log_properties, True)
+            found = Search().search_file(
+                f"{BASE_PATH}/data/cloudtrail_singleline.json",
+                "cloudtrail_singleline.json",
+                "SignatureVersion",
+                False,
+                None,
+                log_format,
+                log_properties,
+                True,
+            )
             output = fake_out.getvalue().strip()
 
         # Assert we can parse the output
