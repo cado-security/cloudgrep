@@ -32,9 +32,10 @@ Simple Google example:
 python3 cloudgrep.py -gb my-gcp-bucket -q my_search
 ```
 
-Simple CloudTrail log example:
-
-python3 cloudgrep.py -b test-s3-access-logs -q 9RXXKPREHHTFQD77 -lt cloudtrail
+Simple CloudTrail log example, outputting results as JSON:
+```
+python3 cloudgrep.py -b test-s3-access-logs -q 9RXXKPREHHTFQD77 -lt cloudtrail -jo
+```
 
 Simple custom log example:
 ```
@@ -61,8 +62,9 @@ Example output:
 ### Arguments ###
 ```
 usage: cloudgrep.py [-h] [-b BUCKET] [-an ACCOUNT_NAME] [-cn CONTAINER_NAME] [-gb GOOGLE_BUCKET] [-q QUERY]
-                    [-v FILE] [-y YARA] [-p PREFIX] [-f FILENAME] [-s START_DATE] [-e END_DATE] [-fs FILE_SIZE]
-                    [-pr PROFILE] [-d] [-hf] [-lt LOG_TYPE] [-lf LOG_FORMAT] [-lp LOG_PROPERTIES]
+                    [-v FILE] [-y YARA] [-p PREFIX] [-f FILENAME] [-s START_DATE] [-e END_DATE]
+                    [-fs FILE_SIZE] [-pr PROFILE] [-d] [-hf] [-lt LOG_TYPE] [-lf LOG_FORMAT]
+                    [-lp LOG_PROPERTIES] [-jo JSON_OUTPUT]
 
 CloudGrep searches is grep for cloud storage like S3 and Azure Storage. Version: 1.0.4
 
@@ -94,13 +96,18 @@ options:
                         Set an AWS profile to use. E.g. default, dev, prod.
   -d, --debug           Enable Debug logging.
   -hf, --hide_filenames
-                        Dont show matching filesnames.
+                        Dont show matching filenames.
   -lt LOG_TYPE, --log_type LOG_TYPE
-                        Return individual matching log entries based on pre-defined log types, otherwise custom log_format and log_properties can be used. E.g. cloudtrail.
+                        Return individual matching log entries based on pre-defined log types, otherwise
+                        custom log_format and log_properties can be used. E.g. cloudtrail.
   -lf LOG_FORMAT, --log_format LOG_FORMAT
-                        Define custom log format of raw file to parse before applying search logic. Used if --log_type is not defined. E.g. json.
+                        Define custom log format of raw file to parse before applying search logic. Used if
+                        --log_type is not defined. E.g. json.
   -lp LOG_PROPERTIES, --log_properties LOG_PROPERTIES
-                        Define custom list of properties to traverse to dynamically extract final list of log records. Used if --log_type is not defined. E.g. [Records].
+                        Define custom list of properties to traverse to dynamically extract final list of log
+                        records. Used if --log_type is not defined. E.g. [Records].
+  -jo JSON_OUTPUT, --json_output JSON_OUTPUT
+                        Output as JSON.
 
 ```
 
