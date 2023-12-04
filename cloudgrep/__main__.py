@@ -1,12 +1,14 @@
-from cloudgrep.cloudgrep import CloudGrep
 import argparse
 import logging
 import sys
+from typing import List
+
+from cloudgrep.cloudgrep import CloudGrep
 
 VERSION = "1.0.4"
 
 # Define a custom argument type for a list of strings
-def list_of_strings(arg):
+def list_of_strings(arg: str) -> List[str]:
     return arg.split(",")
 
 
