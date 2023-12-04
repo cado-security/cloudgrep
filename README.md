@@ -32,6 +32,15 @@ Simple Google example:
 python3 cloudgrep.py -gb my-gcp-bucket -q my_search
 ```
 
+Simple CloudTrail log example, outputting results as JSON:
+```
+python3 cloudgrep.py -b test-s3-access-logs -q 9RXXKPREHHTFQD77 -lt cloudtrail -jo
+```
+
+Simple custom log example:
+```
+python3 cloudgrep.py -b test-s3-access-logs -q 9RXXKPREHHTFQD77 -lf json -lp Records
+```
 
 More complicated example:
 ```
@@ -45,16 +54,17 @@ python3 cloudgrep.py -b test-s3-access-logs -q 9RXXKPREHHTFQD77 --hide_filenames
 
 Example output:
 ```
-Bucket is in region: us-east-2 : Search from the same region to avoid egress charges.
-Searching 11 files in test-s3-access-logs for 9RXXKPREHHTFQD77...
-access2023-01-09-20-34-20-EAC533CB93B4ACBE: abbd82b5ad5dc5d024cd1841d19c0cf2fd7472c47a1501ececde37fe91adc510 bucket-72561-s3bucketalt-1my9piwesfim7 [09/Jan/2023:19:20:00 +0000] 1.125.222.333 arn:aws:sts::000011110470:assumed-role/bucket-72561-myResponseRole-1WP2IOKDV7B4Y/1673265251.340187 9RXXKPREHHTFQD77 REST.GET.BUCKET - "GET /?list-type=2&prefix=-collector%2Fproject-&start-after=&encoding-type=url HTTP/1.1" 200 - 946 - 33 32 "-" "Boto3/1.21.24 Python/3.9.2 Linux/5.10.0-10-cloud-amd64 Botocore/1.24.46" - aNPuHKw== SigV4 ECDHE-RSA-AES128-GCM-SHA256 AuthHeader bucket-72561-s3bucketalt-1my9piwesfim7.s3.us-east-2.amazonaws.com TLSv1.2 - -
+[2023-11-30 13:37:12,416] - Bucket is in region: us-east-2 : Search from the same region to avoid egress charges.
+[2023-11-30 13:37:12,417] - Searching 11 files in test-s3-access-logs for 9RXXKPREHHTFQD77...
+{"key_name": "access2023-01-09-20-34-20-EAC533CB93B4ACBE", "line": "abbd82b5ad5dc5d024cd1841d19c0cf2fd7472c47a1501ececde37fe91adc510 bucket-72561-s3bucketalt-1my9piwesfim7 [09/Jan/2023:19:20:00 +0000] 1.125.222.333 arn:aws:sts::000011110470:assumed-role/bucket-72561-myResponseRole-1WP2IOKDV7B4Y/1673265251.340187 9RXXKPREHHTFQD77 REST.GET.BUCKET - \"GET /?list-type=2&prefix=-collector%2Fproject-&start-after=&encoding-type=url HTTP/1.1\" 200 - 946 - 33 32 \"-\" \"Boto3/1.21.24 Python/3.9.2 Linux/5.10.0-10-cloud-amd64 Botocore/1.24.46\" - aNPuHKw== SigV4 ECDHE-RSA-AES128-GCM-SHA256 AuthHeader bucket-72561-s3bucketalt-1my9piwesfim7.s3.us-east-2.amazonaws.com TLSv1.2 - -"}
 ```
 
 ### Arguments ###
 ```
 usage: cloudgrep.py [-h] [-b BUCKET] [-an ACCOUNT_NAME] [-cn CONTAINER_NAME] [-gb GOOGLE_BUCKET] [-q QUERY]
-                    [-v FILE] [-y YARA] [-p PREFIX] [-f FILENAME] [-s START_DATE] [-e END_DATE] [-fs FILE_SIZE]
-                    [-pr PROFILE] [-d] [-hf]
+                    [-v FILE] [-y YARA] [-p PREFIX] [-f FILENAME] [-s START_DATE] [-e END_DATE]
+                    [-fs FILE_SIZE] [-pr PROFILE] [-d] [-hf] [-lt LOG_TYPE] [-lf LOG_FORMAT]
+                    [-lp LOG_PROPERTIES] [-jo JSON_OUTPUT]
 
 CloudGrep searches is grep for cloud storage like S3 and Azure Storage. Version: 1.0.5
 
@@ -86,7 +96,19 @@ options:
                         Set an AWS profile to use. E.g. default, dev, prod.
   -d, --debug           Enable Debug logging.
   -hf, --hide_filenames
-                        Dont show matching filesnames.
+                        Dont show matching filenames.
+  -lt LOG_TYPE, --log_type LOG_TYPE
+                        Return individual matching log entries based on pre-defined log types, otherwise
+                        custom log_format and log_properties can be used. E.g. cloudtrail.
+  -lf LOG_FORMAT, --log_format LOG_FORMAT
+                        Define custom log format of raw file to parse before applying search logic. Used if
+                        --log_type is not defined. E.g. json.
+  -lp LOG_PROPERTIES, --log_properties LOG_PROPERTIES
+                        Define custom list of properties to traverse to dynamically extract final list of log
+                        records. Used if --log_type is not defined. E.g. [Records].
+  -jo JSON_OUTPUT, --json_output JSON_OUTPUT
+                        Output as JSON.
+
 ```
 
 ### Deployment ###

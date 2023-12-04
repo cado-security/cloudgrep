@@ -1,9 +1,15 @@
-from cloudgrep.cloudgrep import CloudGrep
 import argparse
 import logging
 import sys
+from typing import List
+
+from cloudgrep.cloudgrep import CloudGrep
 
 VERSION = "1.0.5"
+
+# Define a custom argument type for a list of strings
+def list_of_strings(arg: str) -> List[str]:
+    return arg.split(",")
 
 
 def main() -> None:
@@ -68,6 +74,28 @@ def main() -> None:
     parser.add_argument(
         "-hf", "--hide_filenames", help="Dont show matching filenames. ", action="store_true", required=False
     )
+    parser.add_argument(
+        "-lt",
+        "--log_type",
+        help="Return individual matching log entries based on pre-defined log types, otherwise custom log_format and log_properties can be used. E.g. cloudtrail. ",
+        required=False,
+    )
+    parser.add_argument(
+        "-lf",
+        "--log_format",
+        help="Define custom log format of raw file to parse before applying search logic. Used if --log_type is not defined. E.g. json. ",
+        required=False,
+    )
+    parser.add_argument(
+        "-lp",
+        "--log_properties",
+        type=list_of_strings,
+        help="Define custom list of properties to traverse to dynamically extract final list of log records. Used if --log_type is not defined. E.g. ["
+        "Records"
+        "]. ",
+        required=False,
+    )
+    parser.add_argument("-jo", "--json_output", help="Output as JSON.", action="store_true")
     args = vars(parser.parse_args())
 
     if len(sys.argv) == 1:
@@ -77,6 +105,7 @@ def main() -> None:
     if args["debug"]:
         logging.basicConfig(format="[%(asctime)s]:[%(levelname)s] - %(message)s", level=logging.INFO)
     else:
+        logging.basicConfig(format="[%(asctime)s] - %(message)s", level=logging.WARNING)
         logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
 
     CloudGrep().search(
@@ -93,7 +122,11 @@ def main() -> None:
         args["start_date"],
         args["end_date"],
         args["hide_filenames"],
+        args["log_type"],
+        args["log_format"],
+        args["log_properties"],
         args["profile"],
+        args["json_output"],
     )
 
 
