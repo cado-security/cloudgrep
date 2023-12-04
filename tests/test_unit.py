@@ -134,4 +134,4 @@ class CloudGrepTests(unittest.TestCase):
 
         # Assert
         self.assertTrue(matched)
-        self.assertEqual(output, "rule_name : [$a]")
+        self.assertEqual(output, "{'key_name': 'key_name', 'match_rule': 'rule_name', 'match_strings': [$a]}")

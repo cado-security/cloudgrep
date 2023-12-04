@@ -68,7 +68,7 @@ class Search:
         search: str,
         hide_filenames: bool,
         line: str,
-        log_format: str,
+        log_format: Optional[str],
         log_properties: Optional[list[str]] = None,
     ) -> bool:
         """Regex search of the line"""
@@ -98,7 +98,7 @@ class Search:
                 }
                 if not hide_filenames:
                     matched_line_dict.pop("key_name")
-                print(json.dumps(matched_line_dict))
+                print(str(matched_line_dict))
                 matched = True
         return matched
 
@@ -109,7 +109,7 @@ class Search:
         search: str,
         hide_filenames: bool,
         yara_rules: Any,
-        log_format: str,
+        log_format: Optional[str] = None,
         log_properties: Optional[list[str]] = None,
     ) -> bool:
         """Regex search of the file line by line"""

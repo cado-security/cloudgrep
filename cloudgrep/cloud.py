@@ -20,7 +20,7 @@ class Cloud:
         query: str,
         hide_filenames: bool,
         yara_rules: Any,
-        log_format: str,
+        log_format: Optional[str] = None,
         log_properties: Optional[list[str]] = None,
     ) -> int:
         """Use ThreadPoolExecutor and boto3 to download every file in the bucket from s3
