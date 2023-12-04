@@ -12,6 +12,7 @@ from datetime import datetime
 from unittest.mock import patch
 import yara  # type: ignore
 from io import StringIO
+import json
 
 from cloudgrep.cloud import Cloud
 from cloudgrep.search import Search
@@ -40,6 +41,15 @@ class CloudGrepTests(unittest.TestCase):
         # Get lines from .zip compressed file
         found = Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False, None)
         self.assertTrue(found)
+
+    def test_print_match(self) -> None:
+        # Test output of print_match function
+
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False, None)
+            output = fake_out.getvalue().strip()
+
+        self.assertIn("Running on machine", output)
 
     @timeout_decorator.timeout(5)  # Normally takes around 3 seconds to run in github actions
     @mock_s3
@@ -119,7 +129,6 @@ class CloudGrepTests(unittest.TestCase):
     # Given a valid file name, key name, and yara rules, the method should successfully match the file against the rules and print only the rule name and matched strings if hide_filenames is True.
     def test_yara(self) -> None:
         # Arrange
-        search = Search()
         file_name = "valid_file.txt"
         key_name = "key_name"
         hide_filenames = True
@@ -129,9 +138,65 @@ class CloudGrepTests(unittest.TestCase):
 
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            matched = search.yara_scan_file(file_name, key_name, hide_filenames, yara_rules)
+            matched = Search().yara_scan_file(file_name, key_name, hide_filenames, yara_rules, True)
             output = fake_out.getvalue().strip()
 
         # Assert
         self.assertTrue(matched)
-        self.assertEqual(output, "rule_name : [$a]")
+        self.assertEqual(output, "{'match_rule': 'rule_name', 'match_strings': [$a]}")
+
+    # Unit test to check that all output is json parseable
+    def test_json_output(self) -> None:
+
+        # Act
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            Search().search_file(
+                f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None, None, [], True
+            )
+            output = fake_out.getvalue().strip()
+
+        # Assert we can parse the output
+        self.assertTrue(json.loads(output))
+
+    # Unit test to search ./data/cloudtrail.json and ./data/bad_cloudtrail.json in cloudtrail log format
+    def test_search_cloudtrail(self) -> None:
+        # Arrange
+        log_format = "json"
+        log_properties = ["Records"]
+
+        # Test it doesnt crash on bad json
+        Search().search_file(
+            f"{BASE_PATH}/data/bad_cloudtrail.json",
+            "bad_cloudtrail.json",
+            "Running on machine",
+            False,
+            None,
+            log_format,
+            log_properties,
+        )
+        Search().search_file(
+            f"{BASE_PATH}/data/cloudtrail.json",
+            "cloudtrail.json",
+            "Running on machine",
+            False,
+            None,
+            log_format,
+            log_properties,
+        )
+        # Get the output for a hit
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            Search().search_file(
+                f"{BASE_PATH}/data/cloudtrail_singleline.json",
+                "cloudtrail_singleline.json",
+                "SignatureVersion",
+                False,
+                None,
+                log_format,
+                log_properties,
+                True,
+            )
+            output = fake_out.getvalue().strip()
+
+        # Assert we can parse the output
+        self.assertIn("SignatureVersion", output)
+        self.assertTrue(json.loads(output))

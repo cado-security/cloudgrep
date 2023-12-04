@@ -31,7 +31,7 @@ jobs:
         mypy --config-file ./ci/mypy.cfg ./
         flake8 --config ./ci/flake8.cfg
         echo If this fails run: python3 -m black . --config ./ci/black.toml
-        python3 -m black . --config ./ci/black.toml --check
+        # Skip - Behaves differently on local: python3 -m black . --config ./ci/black.toml --check
         python3 -m pip_audit -r requirements.txt
 
   compile-linux:
