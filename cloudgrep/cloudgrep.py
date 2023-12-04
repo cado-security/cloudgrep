@@ -32,6 +32,7 @@ class CloudGrep:
         log_format: Optional[str] = None,
         log_properties: Optional[list[str]] = None,
         profile: Optional[str] = None,
+        json_output: Optional[bool] = False,
     ) -> None:
         # load in a list of queries from a file
         if not query and file:
@@ -44,14 +45,6 @@ class CloudGrep:
                 case "cloudtrail":
                     log_format = "json"
                     log_properties = ["Records"]
-                # TODO: add and test Azure and other log_type mappings
-                # case "azure":
-                #     log_format = "json"
-                #     log_properties = []
-                # TODO: add and test Azure and other log_type mappings
-                # case "gcp":
-                #     log_format = "json"
-                #     log_properties = []
                 case _:
                     logging.error(f"Invalid log_type value ('{log_type}') unhandled in switch statement in 'search' function.")
 
@@ -86,7 +79,7 @@ class CloudGrep:
             else:
                 print(f"Bucket is in region: {region['LocationConstraint']} : Search from the same region to avoid egress charges.")
                 print(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
-            Cloud().download_from_s3_multithread(bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties)
+            Cloud().download_from_s3_multithread(bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output)
 
         if account_name and container_name:
             matching_keys = list(
@@ -95,7 +88,7 @@ class CloudGrep:
                 )
             )
             print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
-            Cloud().download_from_azure(account_name, container_name, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties)
+            Cloud().download_from_azure(account_name, container_name, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output)
 
         if google_bucket:
             matching_keys = list(
@@ -104,4 +97,4 @@ class CloudGrep:
 
             print(f"Searching {len(matching_keys)} files in {google_bucket} for {query}...")
 
-            Cloud().download_from_google(google_bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties)
+            Cloud().download_from_google(google_bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output)

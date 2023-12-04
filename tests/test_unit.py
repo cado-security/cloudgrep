@@ -130,7 +130,7 @@ class CloudGrepTests(unittest.TestCase):
 
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            matched = search.yara_scan_file(file_name, key_name, hide_filenames, yara_rules)
+            matched = search.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, True)
             output = fake_out.getvalue().strip()
 
         # Assert
@@ -145,7 +145,7 @@ class CloudGrepTests(unittest.TestCase):
         
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None)
+            found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None, None, None, True)
             output = fake_out.getvalue().strip()
 
         # Assert we can parse the output
@@ -166,8 +166,9 @@ class CloudGrepTests(unittest.TestCase):
         found = Search().search_file(f"{BASE_PATH}/data/cloudtrail.json", "cloudtrail.json", "Running on machine", False, None, log_format, log_properties)
         # Get the output for a hit
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            found = Search().search_file(f"{BASE_PATH}/data/cloudtrail_singleline.json", "cloudtrail_singleline.json", "SignatureVersion", False, None, log_format, log_properties)
+            found = Search().search_file(f"{BASE_PATH}/data/cloudtrail_singleline.json", "cloudtrail_singleline.json", "SignatureVersion", False, None, log_format, log_properties, True)
             output = fake_out.getvalue().strip()
 
         # Assert we can parse the output
+        self.assertIn("SignatureVersion", output)
         self.assertTrue(json.loads(output))

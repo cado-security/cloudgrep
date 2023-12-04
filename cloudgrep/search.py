@@ -20,14 +20,26 @@ class Search:
             string_list = b.split("\r")
             return string_list
 
-    def print_match(self, matched_line_dict: dict, hide_filenames: bool) -> None:
+    def print_match(self, matched_line_dict: dict, hide_filenames: bool, json_output: bool) -> None:
         """Print matched line"""
-        if hide_filenames:
-            matched_line_dict.pop("key_name")
-        try:
-            print(json.dumps(matched_line_dict))
-        except TypeError:
-            print(str(matched_line_dict))
+        if json_output:
+            if hide_filenames:
+                matched_line_dict.pop("key_name")
+            try:
+                print(json.dumps(matched_line_dict))
+            except TypeError:
+                print(str(matched_line_dict))
+        else:
+            line = ""
+            if "line" in matched_line_dict:
+                line = matched_line_dict['line']
+            if "match_rule" in matched_line_dict:
+                line = f"{matched_line_dict['match_rule']}: {matched_line_dict['match_strings']}"
+            
+            if not hide_filenames:
+                print(f"{matched_line_dict['key_name']}: {line}")
+            else:
+                print(line)
 
     def search_logs(
         self,
@@ -37,6 +49,7 @@ class Search:
         hide_filenames: bool,
         log_format: Optional[str] = None,
         log_properties: Optional[list[str]] = None,
+        json_output: Optional[bool] = False,
     ):
         """Regex search of each log record in input line"""
         # Parse input line based on defined format.
@@ -72,7 +85,7 @@ class Search:
                     "key_name": key_name,
                     "line" : record
                 }
-                self.print_match(matched_line_dict, hide_filenames)
+                self.print_match(matched_line_dict, hide_filenames, json_output)
     
     def search_line(
         self,
@@ -82,21 +95,22 @@ class Search:
         line: str,
         log_format: Optional[str],
         log_properties: Optional[list[str]] = None,
+        json_output: Optional[bool] = False,
     ) -> bool:
         """Regex search of the line"""
         if re.search(search, line):
             if log_format != None:
-                self.search_logs(line, key_name, search, hide_filenames, log_format, log_properties)
+                self.search_logs(line, key_name, search, hide_filenames, log_format, log_properties, json_output)
             else:
                 matched_line_dict = {
                     "key_name": key_name,
                     "line" : line
                 }
-                self.print_match(matched_line_dict, hide_filenames)
+                self.print_match(matched_line_dict, hide_filenames, json_output)
             return True
         return False
 
-    def yara_scan_file(self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: Any) -> bool:  # type: ignore
+    def yara_scan_file(self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: Any, json_output: Optional[bool] = False) -> bool:  # type: ignore
         matched = False
         matches = yara_rules.match(file_name)
         if matches:
@@ -106,7 +120,7 @@ class Search:
                     "match_rule": match.rule,
                     "match_strings": match.strings
                 }
-                self.print_match(matched_line_dict, hide_filenames)
+                self.print_match(matched_line_dict, hide_filenames, json_output)
                 matched = True
         return matched
 
@@ -119,18 +133,19 @@ class Search:
         yara_rules: Any,
         log_format: Optional[str] = None,
         log_properties: Optional[list[str]] = None,
+        json_output: Optional[bool] = False,
     ) -> bool:
         """Regex search of the file line by line"""
         matched = False
         logging.info(f"Searching {file_name} for {search}")
 
         if yara_rules:
-            matched = self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules)
+            matched = self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, json_output)
         else:
             if key_name.endswith(".gz"):
                 with gzip.open(file_name, "rt") as f:
                     for line in f:
-                        if self.search_line(key_name, search, hide_filenames, line, log_format, log_properties):
+                        if self.search_line(key_name, search, hide_filenames, line, log_format, log_properties, json_output):
                             matched = True
             elif key_name.endswith(".zip"):
                 with tempfile.TemporaryDirectory() as tempdir:
@@ -142,11 +157,11 @@ class Search:
                             if os.path.isfile(os.path.join(tempdir, filename)):
                                 with open(os.path.join(tempdir, filename)) as f:
                                     for line in f:
-                                        if self.search_line("{key_name}/{filename}", search, hide_filenames, line, log_format, log_properties):
+                                        if self.search_line("{key_name}/{filename}", search, hide_filenames, line, log_format, log_properties, json_output):
                                             matched = True
             else:
                 for line in self.get_all_strings_line(file_name):
-                    if self.search_line(key_name, search, hide_filenames, line, log_format, log_properties):
+                    if self.search_line(key_name, search, hide_filenames, line, log_format, log_properties, json_output):
                         matched = True
 
         return matched

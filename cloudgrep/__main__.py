@@ -106,6 +106,13 @@ def main() -> None:
         help="Define custom list of properties to traverse to dynamically extract final list of log records. Used if --log_type is not defined. E.g. [""Records""]. ",
         required=False
     )
+    parser.add_argument(
+    "-jo",
+    "--json_output",
+    help="Output as JSON.",
+    required=False,
+    default=False
+    )
     args = vars(parser.parse_args())
 
     if len(sys.argv) == 1:
@@ -136,6 +143,7 @@ def main() -> None:
         args["log_format"],
         args["log_properties"],
         args["profile"],
+        args["json_output"]
     )
 
 
