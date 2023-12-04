@@ -154,7 +154,7 @@ class CloudGrepTests(unittest.TestCase):
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
             found = Search().search_file(
-                f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None, None, None, True
+                f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None, None, [], True
             )
             output = fake_out.getvalue().strip()
 
