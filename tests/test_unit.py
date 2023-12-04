@@ -42,6 +42,15 @@ class CloudGrepTests(unittest.TestCase):
         found = Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False, None)
         self.assertTrue(found)
 
+    def test_print_match(self) -> None:
+        # Test output of print_match function
+
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False, None)
+            output = fake_out.getvalue().strip()
+
+        self.assertIn("Running on machine", output)
+
     @timeout_decorator.timeout(5)  # Normally takes around 3 seconds to run in github actions
     @mock_s3
     def test_e2e(self) -> None:

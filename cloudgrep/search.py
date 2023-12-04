@@ -153,7 +153,7 @@ class Search:
                                 with open(os.path.join(tempdir, filename)) as f:
                                     for line in f:
                                         if self.search_line(
-                                            "{key_name}/{filename}",
+                                            f"{key_name}/{filename}",
                                             search,
                                             hide_filenames,
                                             line,
