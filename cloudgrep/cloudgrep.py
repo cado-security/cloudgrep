@@ -32,7 +32,7 @@ class CloudGrep:
         hide_filenames: bool = False,
         log_type: Optional[str] = None,
         log_format: Optional[str] = None,
-        log_properties: List[str]= [],
+        log_properties: List[str] = [],
         profile: Optional[str] = None,
         json_output: Optional[bool] = False,
     ) -> None:

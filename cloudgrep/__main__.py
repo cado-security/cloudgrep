@@ -95,7 +95,7 @@ def main() -> None:
         "]. ",
         required=False,
     )
-    parser.add_argument("-jo", "--json_output", help="Output as JSON.", action='store_true')
+    parser.add_argument("-jo", "--json_output", help="Output as JSON.", action="store_true")
     args = vars(parser.parse_args())
 
     if len(sys.argv) == 1:
