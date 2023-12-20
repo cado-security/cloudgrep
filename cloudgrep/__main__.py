@@ -21,7 +21,11 @@ def main() -> None:
     parser.add_argument("-cn", "--container-name", help="Azure Container Name to Search", required=False)
     parser.add_argument("-gb", "--google-bucket", help="Google Cloud Bucket to Search", required=False)
     parser.add_argument(
-        "-q", "--query", help="Text to search for. Will be parsed as a Regex. E.g. example.com", required=False
+        "-q",
+        "--query",
+        type=list_of_strings,
+        help="Text to search for. Will be parsed as a Regex. E.g. example.com",
+        required=False
     )
     parser.add_argument(
         "-v",
