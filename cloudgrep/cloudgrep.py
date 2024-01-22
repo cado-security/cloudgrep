@@ -10,10 +10,10 @@ import yara  # type: ignore
 
 
 class CloudGrep:
-    def load_queries(self, file: str) -> str:
+    def load_queries(self, file: str) -> List[str]:
         """Load in a list of queries from a file"""
         with open(file, "r") as f:
-            return "|".join([line.strip() for line in f.readlines() if len(line.strip())])
+            return ([line.strip() for line in f.readlines() if len(line.strip())])
 
     def search(
         self,
@@ -21,7 +21,7 @@ class CloudGrep:
         account_name: Optional[str],
         container_name: Optional[str],
         google_bucket: Optional[str],
-        query: str,
+        query: List[str],
         file: Optional[str],
         yara_file: Optional[str],
         file_size: int,

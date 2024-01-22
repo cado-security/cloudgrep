@@ -84,13 +84,13 @@ class Search:
         # Perform per-line searching.
         for record in line_parsed:
             if re.search(search, json.dumps(record)):
-                matched_line_dict = {"key_name": key_name, "line": record}
+                matched_line_dict = {"key_name": key_name, "query": search, "line": record}
                 self.print_match(matched_line_dict, hide_filenames, json_output)
 
     def search_line(
         self,
         key_name: str,
-        search: str,
+        search: List[str],
         hide_filenames: bool,
         line: str,
         log_format: Optional[str],
@@ -98,14 +98,16 @@ class Search:
         json_output: Optional[bool] = False,
     ) -> bool:
         """Regex search of the line"""
-        if re.search(search, line):
-            if log_format != None:
-                self.search_logs(line, key_name, search, hide_filenames, log_format, log_properties, json_output)
-            else:
-                matched_line_dict = {"key_name": key_name, "line": line}
-                self.print_match(matched_line_dict, hide_filenames, json_output)
-            return True
-        return False
+        matched = False
+        for cur_search in search:
+            if re.search(cur_search, line):
+                if log_format != None:
+                    self.search_logs(line, key_name, cur_search, hide_filenames, log_format, log_properties, json_output)
+                else:
+                    matched_line_dict = {"key_name": key_name, "query": cur_search, "line": line}
+                    self.print_match(matched_line_dict, hide_filenames, json_output)
+                matched = True
+        return matched
 
     def yara_scan_file(self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: Any, json_output: Optional[bool] = False) -> bool:  # type: ignore
         matched = False
@@ -121,7 +123,7 @@ class Search:
         self,
         file_name: str,
         key_name: str,
-        search: str,
+        search: List[str],
         hide_filenames: bool,
         yara_rules: Any,
         log_format: Optional[str] = None,

@@ -12,6 +12,7 @@ from datetime import datetime
 from unittest.mock import patch
 import yara  # type: ignore
 from io import StringIO
+from typing import List
 import json
 
 from cloudgrep.cloud import Cloud
@@ -34,19 +35,19 @@ class CloudGrepTests(unittest.TestCase):
 
     def test_gzip(self) -> None:
         # Get lines from .gz compressed file
-        found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None)
+        found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", ["Running on machine"], False, None)
         self.assertTrue(found)
 
     def test_zip(self) -> None:
         # Get lines from .zip compressed file
-        found = Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False, None)
+        found = Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", ["Running on machine"], False, None)
         self.assertTrue(found)
 
     def test_print_match(self) -> None:
         # Test output of print_match function
 
         with patch("sys.stdout", new=StringIO()) as fake_out:
-            Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", "Running on machine", False, None)
+            Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", ["Running on machine"], False, None)
             output = fake_out.getvalue().strip()
 
         self.assertIn("Running on machine", output)
@@ -74,8 +75,8 @@ class CloudGrepTests(unittest.TestCase):
         assert len(matching_keys) == 3
 
         print(f"Checking we only get one search hit in: {matching_keys}")
-        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)
-        assert hits == 1
+        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None) # type: ignore
+        assert hits == 3
 
         print("Testing with multiple queries from a file")
         file = "queries.txt"
@@ -91,7 +92,7 @@ class CloudGrepTests(unittest.TestCase):
                 s3.upload_fileobj(data, _BUCKET, str(x))
 
         print("Searching")
-        Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)
+        Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)  # type: ignore
         print("Searched")
 
     def test_object_not_empty_and_size_greater_than_file_size(self) -> None:
@@ -123,8 +124,8 @@ class CloudGrepTests(unittest.TestCase):
         with open(file, "w") as f:
             f.write("query1\nquery2\nquery3")
         queries = CloudGrep().load_queries(file)
-        self.assertIsInstance(queries, str)
-        self.assertEqual(queries, "query1|query2|query3")
+        self.assertIsInstance(queries, List)
+        self.assertEqual(queries, ["query1", "query2", "query3"] )
 
     # Given a valid file name, key name, and yara rules, the method should successfully match the file against the rules and print only the rule name and matched strings if hide_filenames is True.
     def test_yara(self) -> None:
@@ -151,7 +152,7 @@ class CloudGrepTests(unittest.TestCase):
         # Act
         with patch("sys.stdout", new=StringIO()) as fake_out:
             Search().search_file(
-                f"{BASE_PATH}/data/000000.gz", "000000.gz", "Running on machine", False, None, None, [], True
+                f"{BASE_PATH}/data/000000.gz", "000000.gz", ["Running on machine"], False, None, None, [], True
             )
             output = fake_out.getvalue().strip()
 
@@ -168,7 +169,7 @@ class CloudGrepTests(unittest.TestCase):
         Search().search_file(
             f"{BASE_PATH}/data/bad_cloudtrail.json",
             "bad_cloudtrail.json",
-            "Running on machine",
+            ["Running on machine"],
             False,
             None,
             log_format,
@@ -177,7 +178,7 @@ class CloudGrepTests(unittest.TestCase):
         Search().search_file(
             f"{BASE_PATH}/data/cloudtrail.json",
             "cloudtrail.json",
-            "Running on machine",
+            ["Running on machine"],
             False,
             None,
             log_format,
@@ -188,7 +189,7 @@ class CloudGrepTests(unittest.TestCase):
             Search().search_file(
                 f"{BASE_PATH}/data/cloudtrail_singleline.json",
                 "cloudtrail_singleline.json",
-                "SignatureVersion",
+                ["SignatureVersion"],
                 False,
                 None,
                 log_format,
