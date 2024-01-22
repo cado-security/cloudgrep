@@ -75,7 +75,7 @@ class CloudGrepTests(unittest.TestCase):
         assert len(matching_keys) == 3
 
         print(f"Checking we only get one search hit in: {matching_keys}")
-        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)
+        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None) # type: ignore
         assert hits == 3
 
         print("Testing with multiple queries from a file")
@@ -92,7 +92,7 @@ class CloudGrepTests(unittest.TestCase):
                 s3.upload_fileobj(data, _BUCKET, str(x))
 
         print("Searching")
-        Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)
+        Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)  # type: ignore
         print("Searched")
 
     def test_object_not_empty_and_size_greater_than_file_size(self) -> None:
