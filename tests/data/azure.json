@@ -1,0 +1,56 @@
+[
+    {
+      "data": {
+        "authorization": {
+          "action": "Microsoft.Storage/storageAccounts/listKeys/action",
+          "scope": "/subscriptions/ji12gbh3jh12b3h12vb3hv123h/resourceGroups/test/providers/Microsoft.Storage/storageAccounts/storagetest"
+        },
+        "caller": "test@email",
+        "channels": "Operation",
+        "claims": {
+          "aud": "https://management.core.windows.net/",
+          "ver": "1.0",
+          "xms_cae": "1",
+          "xms_tcdt": "1231293743"
+        },
+        "correlationId": "b12321j3bhdgscj214j3b12rhv",
+        "description": "",
+        "eventDataId": "21371283ghjgfsdb9876123",
+        "eventName": {
+          "value": "EndRequest",
+          "localizedValue": "End request"
+        },
+        "httpRequest": {
+          "clientRequestId": "9dsfghj1290-381293ghu123gvh123",
+          "clientIpAddress": "11.11.11.10",
+          "method": "POST",
+          "uri": "https://management.azure.com/subscriptions/12937812uhg3uhj2qwgrfbhsdfgb138294e12ugv/resourceGroups/Test/providers/Microsoft.Storage/storageAccounts/storagetest/listKeys?api-version=2022-05-01"
+        },
+        "id": "/subscriptions/12937812uhg3uhj2qwgrfbhsdfgb138294e12ugv/resourceGroups/Test/providers/Microsoft.Storage/storageAccounts/storagetest/events/21371283ghjgfsdb9876123/ticks/2193871283612873612",
+        "level": "Informational",
+        "resourceGroupName": "Test",
+        "resourceProviderName": {
+          "value": "Microsoft.Storage",
+          "localizedValue": "Microsoft.Storage"
+        },
+        "resourceId": "/subscriptions/12937812uhg3uhj2qwgrfbhsdfgb138294e12ugv/resourceGroups/Test/providers/Microsoft.Storage/storageAccounts/storagetest",
+        "operationId": "ac8a903f-315d-421a-8533-84ed10b356cd",
+        "operationName": {
+          "value": "Microsoft.Storage/storageAccounts/listKeys/action",
+          "localizedValue": "List Storage Account Keys"
+        },
+        "status": {
+          "value": "Succeeded",
+          "localizedValue": "Succeeded"
+        },
+        "subStatus": {
+          "value": "OK",
+          "localizedValue": "OK (HTTP Status Code: 200)"
+        },
+        "tenantId": "12321MN3BNDASVBfD09SFDGSD"
+      },
+      "version": 1,
+      "eventId": "21371283ghjgfsdb9876123",
+      "eventType": "AZURE_CLOUD"
+    }
+  ]

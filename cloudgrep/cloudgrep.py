@@ -47,6 +47,9 @@ class CloudGrep:
                 case "cloudtrail":
                     log_format = "json"
                     log_properties = ["Records"]
+                case "azure":
+                    log_format = "json"
+                    log_properties = ["data"]
                 case _:
                     logging.error(
                         f"Invalid log_type value ('{log_type}') unhandled in switch statement in 'search' function."
@@ -97,7 +100,11 @@ class CloudGrep:
                     account_name, container_name, prefix, key_contains, parsed_from_date, parsed_end_date, file_size
                 )
             )
-            print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
+            if log_format != None:
+                logging.warning(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
+            else:
+                print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
+
             Cloud().download_from_azure(
                 account_name,
                 container_name,
