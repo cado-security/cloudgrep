@@ -10,14 +10,6 @@ import csv
 
 
 class Search:
-    def get_all_json_strings(self, file_path: str) -> List[str]:
-        """ Get all the json data from a file"""
-        print("getting json strings")
-        with open(file_path, "r") as j:
-            read_data = json.load(j)
-            data = json.dumps(read_data)
-            return data
-
     def get_all_strings_line(self, file_path: str) -> List[str]:
         """Get all the strings from a file line by line
         We do this instead of f.readlines() as this supports binary files too
