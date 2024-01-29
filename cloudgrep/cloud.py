@@ -1,4 +1,3 @@
-import json
 import boto3
 from azure.storage.blob import BlobServiceClient, BlobProperties
 from azure.identity import DefaultAzureCredential
@@ -83,7 +82,6 @@ class Cloud:
                 try:
                     blob_client = container_client.get_blob_client(key)
                     with open(tmp.name, "wb") as my_blob:
-
                         blob_data = blob_client.download_blob()
                         blob_data.readinto(my_blob)
                     matched = Search().search_file(
