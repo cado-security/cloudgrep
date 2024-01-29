@@ -75,7 +75,7 @@ class CloudGrepTests(unittest.TestCase):
         assert len(matching_keys) == 3
 
         print(f"Checking we only get one search hit in: {matching_keys}")
-        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None) # type: ignore
+        hits = Cloud().download_from_s3_multithread(_BUCKET, matching_keys, _QUERY, False, None)  # type: ignore
         assert hits == 3
 
         print("Testing with multiple queries from a file")
@@ -118,14 +118,14 @@ class CloudGrepTests(unittest.TestCase):
 
         self.assertTrue(result)
 
-    # # returns a string with the contents of the file
+    # returns a string with the contents of the file
     def test_returns_string_with_file_contents(self) -> None:
         file = "queries.txt"
         with open(file, "w") as f:
             f.write("query1\nquery2\nquery3")
         queries = CloudGrep().load_queries(file)
         self.assertIsInstance(queries, List)
-        self.assertEqual(queries, ["query1", "query2", "query3"] ) 
+        self.assertEqual(queries, ["query1", "query2", "query3"])
 
     # Given a valid file name, key name, and yara rules, the method should successfully match the file against the rules and print only the rule name and matched strings if hide_filenames is True.
     def test_yara(self) -> None:
@@ -202,43 +202,44 @@ class CloudGrepTests(unittest.TestCase):
         self.assertIn("SignatureVersion", output)
         self.assertTrue(json.loads(output))
 
+
 def test_search_azure(self) -> None:
-        # Arrange
-        log_format = "json"
-        log_properties = ["data"]
+    # Arrange
+    log_format = "json"
+    log_properties = ["data"]
 
-        # Test it doesnt crash on bad json
+    # Test it doesnt crash on bad json
+    Search().search_file(
+        f"{BASE_PATH}/data/bad_azure.json",
+        "bad_azure.json",
+        ["azure.gz"],
+        False,
+        None,
+        log_format,
+        log_properties,
+    )
+    Search().search_file(
+        f"{BASE_PATH}/data/azure.json",
+        "azure.json",
+        ["azure.gz"],
+        False,
+        None,
+        log_format,
+        log_properties,
+    )
+    with patch("sys.stdout", new=StringIO()) as fake_out:
         Search().search_file(
-            f"{BASE_PATH}/data/bad_azure.json",
-            "bad_azure.json",
+            f"{BASE_PATH}/data/azure_singleline.json",
+            "azure_singleline.json",
             ["azure.gz"],
             False,
             None,
             log_format,
             log_properties,
+            True,
         )
-        Search().search_file(
-            f"{BASE_PATH}/data/azure.json",
-            "azure.json",
-            ["azure.gz"],
-            False,
-            None,
-            log_format,
-            log_properties,
-        )
-        with patch("sys.stdout", new=StringIO()) as fake_out:
-            Search().search_file(
-                f"{BASE_PATH}/data/azure_singleline.json",
-                "azure_singleline.json",
-                ["azure.gz"],
-                False,
-                None,
-                log_format,
-                log_properties,
-                True,
-            )
-            output = fake_out.getvalue().strip()
+        output = fake_out.getvalue().strip()
 
-        # Assert we can parse the output
-        self.assertIn("SignatureVersion", output)
-        self.assertTrue(json.loads(output))
+    # Assert we can parse the output
+    self.assertIn("SignatureVersion", output)
+    self.assertTrue(json.loads(output))

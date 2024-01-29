@@ -14,7 +14,6 @@ class Search:
         """Get all the strings from a file line by line
         We do this instead of f.readlines() as this supports binary files too
         """
-        print("getting the strings line with bytes")
         with open(file_path, "rb") as f:
             read_bytes = f.read()
             b = read_bytes.decode("utf-8", "ignore")
@@ -25,14 +24,13 @@ class Search:
     def print_match(self, matched_line_dict: dict, hide_filenames: bool, json_output: Optional[bool]) -> None:
         """Print matched line"""
         if json_output:
-            # print("jsoni")
             if hide_filenames:
                 matched_line_dict.pop("key_name")
             try:
-                
+
                 print(json.dumps(matched_line_dict))
             except TypeError:
-                
+
                 print(str(matched_line_dict))
         else:
             line = ""
@@ -42,10 +40,9 @@ class Search:
                 line = f"{matched_line_dict['match_rule']}: {matched_line_dict['match_strings']}"
 
             if not hide_filenames:
-                
-                print(f"{matched_line_dict['key_name']}: {matched_line_dict}")
+                print(f"{matched_line_dict['key_name']}: {line}")
             else:
-                
+
                 print(line)
 
     def search_logs(
@@ -79,7 +76,7 @@ class Search:
 
         # Step into property/properties to get to final list of lines for per-line searching.
         if log_properties != None:
-          
+
             for log_property in log_properties:
                 if line_parsed:
                     line_parsed = line_parsed.get(log_property, None)
@@ -91,7 +88,7 @@ class Search:
         # Perform per-line searching.
         for record in line_parsed:
             if re.search(search, json.dumps(record)):
-              
+
                 matched_line_dict = {"key_name": key_name, "query": search, "line": record}
                 self.print_match(matched_line_dict, hide_filenames, json_output)
 
@@ -109,11 +106,13 @@ class Search:
         matched = False
         for cur_search in search:
             if re.search(cur_search, line):
-                
+
                 if log_format != None:
-                    self.search_logs(line, key_name, cur_search, hide_filenames, log_format, log_properties, json_output)
+                    self.search_logs(
+                        line, key_name, cur_search, hide_filenames, log_format, log_properties, json_output
+                    )
                 else:
-                  
+
                     matched_line_dict = {"key_name": key_name, "query": cur_search, "line": line}
                     self.print_match(matched_line_dict, hide_filenames, json_output)
                 matched = True
@@ -140,35 +139,32 @@ class Search:
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
         account_name: Optional[str] = None,
-       
-        
     ) -> bool:
         """Regex search of the file line by line"""
         matched = False
-        
-        # print("search")
+
+        logging.info(f"Searching {file_name} for {search}")
         if yara_rules:
-            print("yara")
             matched = self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, json_output)
         else:
-            if key_name.endswith(".gz"): 
-                               
+            if key_name.endswith(".gz"):
                 with gzip.open(file_name, "rt") as f:
-                    
                     if account_name:
-                        json_data = json.load(f)
-                        for i in range(len(json_data)):
-                            data = json_data[i]
-                            line = json.dumps(data)
-                            
-                            if self.search_line(
-                                key_name, search, hide_filenames, line, log_format, log_properties, json_output
-                            ):
-                                matched = True
+                        try:
+                            # Try to load the file as JSON
+                            json_data = json.load(f)
+                            for i in range(len(json_data)):
+                                data = json_data[i]
+                                line = json.dumps(data)
+                                if self.search_line(
+                                    key_name, search, hide_filenames, line, log_format, log_properties, json_output
+                                ):
+                                    matched = True
+                        except json.JSONDecodeError:
+                            logging.info(f"File {file_name} is not JSON")
                     else:
-                       
                         for line in f:
-                            
+
                             if self.search_line(
                                 key_name, search, hide_filenames, line, log_format, log_properties, json_output
                             ):
@@ -183,30 +179,39 @@ class Search:
                             if os.path.isfile(os.path.join(tempdir, filename)):
                                 with open(os.path.join(tempdir, filename)) as f:
                                     if account_name:
-                                         if account_name:
-                                            json_data = json.load(f)
-                                            for i in range(len(json_data)):
-                                                data = json_data[i]
-                                                line = json.dumps(data)
-                                                
-                                                if self.search_line(
-                                                    key_name, search, hide_filenames, line, log_format, log_properties, json_output
-                                                ):
-                                                    matched = True
+                                        if account_name:
+                                            try:
+                                                json_data = json.load(f)
+                                                for i in range(len(json_data)):
+                                                    data = json_data[i]
+                                                    line = json.dumps(data)
+
+                                                    if self.search_line(
+                                                        key_name,
+                                                        search,
+                                                        hide_filenames,
+                                                        line,
+                                                        log_format,
+                                                        log_properties,
+                                                        json_output,
+                                                    ):
+                                                        matched = True
+                                            except json.JSONDecodeError:
+                                                logging.info(f"File {file_name} is not JSON")
                                     else:
-                                     for line in f:
-                                        if self.search_line(
-                                            f"{key_name}/{filename}",
-                                            search,
-                                            hide_filenames,
-                                            line,
-                                            log_format,
-                                            log_properties,
-                                            json_output,
-                                        ):
-                                            matched = True
+                                        for line in f:
+                                            if self.search_line(
+                                                f"{key_name}/{filename}",
+                                                search,
+                                                hide_filenames,
+                                                line,
+                                                log_format,
+                                                log_properties,
+                                                json_output,
+                                            ):
+                                                matched = True
             else:
-            
+
                 for line in self.get_all_strings_line(file_name):
 
                     if self.search_line(

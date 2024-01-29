@@ -13,7 +13,7 @@ class CloudGrep:
     def load_queries(self, file: str) -> List[str]:
         """Load in a list of queries from a file"""
         with open(file, "r") as f:
-            return ([line.strip() for line in f.readlines() if len(line.strip())])
+            return [line.strip() for line in f.readlines() if len(line.strip())]
 
     def search(
         self,
@@ -100,10 +100,7 @@ class CloudGrep:
                     account_name, container_name, prefix, key_contains, parsed_from_date, parsed_end_date, file_size
                 )
             )
-            if log_format != None:
-                logging.warning(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
-            else:
-                print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
+            print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
 
             Cloud().download_from_azure(
                 account_name,
