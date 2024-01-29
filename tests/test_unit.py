@@ -203,7 +203,7 @@ class CloudGrepTests(unittest.TestCase):
         self.assertTrue(json.loads(output))
 
 
-def test_search_azure(self) -> None: # type: ignore
+def test_search_azure(self) -> None:  # type: ignore
     # Arrange
     log_format = "json"
     log_properties = ["data"]
