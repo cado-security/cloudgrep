@@ -13,7 +13,7 @@ class CloudGrep:
     def load_queries(self, file: str) -> List[str]:
         """Load in a list of queries from a file"""
         with open(file, "r") as f:
-            return ([line.strip() for line in f.readlines() if len(line.strip())])
+            return [line.strip() for line in f.readlines() if len(line.strip())]
 
     def search(
         self,
@@ -47,6 +47,9 @@ class CloudGrep:
                 case "cloudtrail":
                     log_format = "json"
                     log_properties = ["Records"]
+                case "azure":
+                    log_format = "json"
+                    log_properties = ["data"]
                 case _:
                     logging.error(
                         f"Invalid log_type value ('{log_type}') unhandled in switch statement in 'search' function."
@@ -98,6 +101,7 @@ class CloudGrep:
                 )
             )
             print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
+
             Cloud().download_from_azure(
                 account_name,
                 container_name,

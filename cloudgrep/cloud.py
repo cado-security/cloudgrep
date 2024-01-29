@@ -85,7 +85,15 @@ class Cloud:
                         blob_data = blob_client.download_blob()
                         blob_data.readinto(my_blob)
                     matched = Search().search_file(
-                        tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                        tmp.name,
+                        key,
+                        query,
+                        hide_filenames,
+                        yara_rules,
+                        log_format,
+                        log_properties,
+                        json_output,
+                        account_name,
                     )
                     if matched:
                         nonlocal matched_count
@@ -226,7 +234,9 @@ class Cloud:
         )
         container_client = blob_service_client.get_container_client(container_name)
         blobs = container_client.list_blobs(name_starts_with=prefix)
+
         for blob in blobs:
+
             if self.filter_object_azure(
                 blob,
                 key_contains,
