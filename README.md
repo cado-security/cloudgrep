@@ -119,6 +119,8 @@ Or download the latest compiled release [here](https://github.com/cado-security/
 
 You can run this from your local laptop, or from a virtual machine in your cloud provider.
 
+This requires python3.10 or later
+
 #### Docker ####
 
 Build with:
