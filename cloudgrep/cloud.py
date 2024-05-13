@@ -36,6 +36,7 @@ class Cloud:
         def download_file(key: str) -> None:
             # Get meta data of file in s3 using boto3
             with tempfile.NamedTemporaryFile() as tmp:
+                tmp.close() # fixes issue on windows
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
                 s3.download_file(bucket, key, tmp.name)
                 matched = Search().search_file(
@@ -78,6 +79,7 @@ class Cloud:
 
         def download_file(key: str) -> None:
             with tempfile.NamedTemporaryFile() as tmp:
+                tmp.close() # fixes issue on windows
                 logging.info(f"Downloading {account_name}/{container_name} {key} to {tmp.name}")
                 try:
                     blob_client = container_client.get_blob_client(key)
@@ -127,6 +129,7 @@ class Cloud:
 
         def download_file(key: str) -> None:
             with tempfile.NamedTemporaryFile() as tmp:
+                tmp.close() # fixes issue on windows
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
                 blob = bucket_gcp.get_blob(key)
                 blob.download_to_filename(tmp.name)
