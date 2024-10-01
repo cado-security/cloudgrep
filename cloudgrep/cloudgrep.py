@@ -49,7 +49,9 @@ class CloudGrep:
                     log_properties = ["Records"]
                 case "azure":
                     log_format = "json"
-                    log_properties = ["data"]
+                case "gcp":
+                    log_format = "json"
+    
                 case _:
                     logging.error(
                         f"Invalid log_type value ('{log_type}') unhandled in switch statement in 'search' function."
@@ -91,7 +93,7 @@ class CloudGrep:
                 )
                 print(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
             Cloud().download_from_s3_multithread(
-                bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                bucket, matching_keys, query, hide_filenames, yara_rules, log_type, log_format, log_properties, json_output
             )
 
         if account_name and container_name:
@@ -109,6 +111,7 @@ class CloudGrep:
                 query,
                 hide_filenames,
                 yara_rules,
+                log_type,
                 log_format,
                 log_properties,
                 json_output,
@@ -122,5 +125,5 @@ class CloudGrep:
             print(f"Searching {len(matching_keys)} files in {google_bucket} for {query}...")
 
             Cloud().download_from_google(
-                google_bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                google_bucket, matching_keys, query, hide_filenames, yara_rules, log_type, log_format, log_properties, json_output
             )
