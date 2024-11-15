@@ -20,6 +20,7 @@ class Cloud:
         query: List[str],
         hide_filenames: bool,
         yara_rules: Any,
+        log_type: Optional[str] = None,
         log_format: Optional[str] = None,
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
@@ -31,7 +32,6 @@ class Cloud:
         )
         matched_count = 0
         s3 = boto3.client("s3", config=client_config)
-
         # Create a function to download the files
         def download_file(key: str) -> None:
             # Get meta data of file in s3 using boto3
@@ -40,7 +40,7 @@ class Cloud:
                 logging.info(f"Downloading {bucket} {key} to {tmp.name}")
                 s3.download_file(bucket, key, tmp.name)
                 matched = Search().search_file(
-                    tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                    tmp.name, key, query, hide_filenames, yara_rules, log_type, log_format, log_properties, json_output
                 )
                 if matched:
                     nonlocal matched_count
@@ -63,6 +63,7 @@ class Cloud:
         query: List[str],
         hide_filenames: bool,
         yara_rules: Any,
+        log_type: Optional[str] = None,
         log_format: Optional[str] = None,
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
@@ -92,6 +93,7 @@ class Cloud:
                         query,
                         hide_filenames,
                         yara_rules,
+                        log_type,
                         log_format,
                         log_properties,
                         json_output,
@@ -116,6 +118,7 @@ class Cloud:
         query: List[str],
         hide_filenames: bool,
         yara_rules: Any,
+        log_type: Optional[str] = None,
         log_format: Optional[str] = None,
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
@@ -134,7 +137,7 @@ class Cloud:
                 blob = bucket_gcp.get_blob(key)
                 blob.download_to_filename(tmp.name)
                 matched = Search().search_file(
-                    tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                    tmp.name, key, query, hide_filenames, yara_rules, log_type, log_format, log_properties, json_output
                 )
                 if matched:
                     nonlocal matched_count

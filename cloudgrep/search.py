@@ -20,7 +20,6 @@ class Search:
             b = b.replace("\n", "\r")
             string_list = b.split("\r")
             return string_list
-
     def print_match(self, matched_line_dict: dict, hide_filenames: bool, json_output: Optional[bool]) -> None:
         """Print matched line"""
         if json_output:
@@ -42,7 +41,6 @@ class Search:
             if not hide_filenames:
                 print(f"{matched_line_dict['key_name']}: {line}")
             else:
-
                 print(line)
 
     def search_logs(
@@ -73,10 +71,8 @@ class Search:
                 # Default to JSON format.
                 log_format = "json"
                 line_parsed = json.loads(line)
-
         # Step into property/properties to get to final list of lines for per-line searching.
         if log_properties != None:
-
             for log_property in log_properties:
                 if line_parsed:
                     line_parsed = line_parsed.get(log_property, None)
@@ -88,7 +84,6 @@ class Search:
         # Perform per-line searching.
         for record in line_parsed:
             if re.search(search, json.dumps(record)):
-
                 matched_line_dict = {"key_name": key_name, "query": search, "line": record}
                 self.print_match(matched_line_dict, hide_filenames, json_output)
 
@@ -106,13 +101,11 @@ class Search:
         matched = False
         for cur_search in search:
             if re.search(cur_search, line):
-
                 if log_format != None:
                     self.search_logs(
                         line, key_name, cur_search, hide_filenames, log_format, log_properties, json_output
                     )
                 else:
-
                     matched_line_dict = {"key_name": key_name, "query": cur_search, "line": line}
                     self.print_match(matched_line_dict, hide_filenames, json_output)
                 matched = True
@@ -135,6 +128,7 @@ class Search:
         search: List[str],
         hide_filenames: bool,
         yara_rules: Any,
+        log_type: Optional[str] = None,
         log_format: Optional[str] = None,
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
@@ -149,56 +143,60 @@ class Search:
         else:
             if key_name.endswith(".gz"):
                 with gzip.open(file_name, "rt") as f:
-                    if account_name:
+                    if log_type == 'azure' or log_type == 'gcp':
                         try:
-                            # Try to load the file as JSON
-                            json_data = json.load(f)
-                            for i in range(len(json_data)):
-                                data = json_data[i]
-                                line = json.dumps(data)
-                                if self.search_line(
-                                    key_name, search, hide_filenames, line, log_format, log_properties, json_output
-                                ):
-                                    matched = True
-                        except json.JSONDecodeError:
-                            logging.info(f"File {file_name} is not JSON")
-                    else:
-                        for line in f:
-
+                            data = json.load(f)
+                            line = json.dumps(data)  
+                                                                
                             if self.search_line(
                                 key_name, search, hide_filenames, line, log_format, log_properties, json_output
                             ):
                                 matched = True
+                        except json.JSONDecodeError:
+                            logging.info(f"File {file_name} is not JSON")
+                    else:
+                        for line in f:
+                            if self.search_line(
+                               key_name, search, hide_filenames, line, log_format, log_properties, json_output
+                         ):
+                               matched = True
             elif key_name.endswith(".zip"):
                 with tempfile.TemporaryDirectory() as tempdir:
                     with zipfile.ZipFile(file_name, "r") as zf:
                         zf.extractall(tempdir)
                         logging.info(f"Extracted {file_name} to {tempdir}")
-                        for filename in os.listdir(tempdir):
+                        for filename in os.listdir(tempdir):  
                             logging.info(f"Searching in zip {filename}")
                             if os.path.isfile(os.path.join(tempdir, filename)):
-                                with open(os.path.join(tempdir, filename)) as f:
-                                    if account_name:
-                                        if account_name:
-                                            try:
-                                                json_data = json.load(f)
-                                                for i in range(len(json_data)):
-                                                    data = json_data[i]
-                                                    line = json.dumps(data)
-
-                                                    if self.search_line(
-                                                        key_name,
-                                                        search,
-                                                        hide_filenames,
-                                                        line,
-                                                        log_format,
-                                                        log_properties,
-                                                        json_output,
-                                                    ):
-                                                        matched = True
-                                            except json.JSONDecodeError:
-                                                logging.info(f"File {file_name} is not JSON")
-                                    else:
+                                with open(os.path.join(tempdir, filename)) as f:  
+                                
+                                    if log_type == 'azure':
+                                       
+                                        try:
+                                            data = json.load(f)
+                                            line = json.dumps(data)                                           
+                                            if self.search_line(
+                                                key_name, search, hide_filenames, line, log_format, log_properties, json_output
+                                            ):
+                                                matched = True
+                                        except json.JSONDecodeError:
+                                            logging.info(f"File {file_name} is not JSON")
+                                    elif log_type == 'gcp':
+                                       # print("test")
+                                        data = json.load(f)
+                                        line = json.dumps(data)
+                                        # for line in f:
+                                        if self.search_line(
+                                            key_name,
+                                            search,
+                                            hide_filenames,
+                                            line,
+                                            log_format,
+                                            log_properties,
+                                            json_output,
+                                        ):
+                                            matched = True
+                                    else:          
                                         for line in f:
                                             if self.search_line(
                                                 f"{key_name}/{filename}",
@@ -211,12 +209,21 @@ class Search:
                                             ):
                                                 matched = True
             else:
+                if log_format == 'json':
+                      with open(file_name, "r") as f:
+                        data = json.load(f)
+                        line = json.dumps(data)
+                        
+                        if self.search_line(
+                            key_name, search, hide_filenames, line, log_format, log_properties, json_output
+                        ):
+                            matched = True
+                else:
 
-                for line in self.get_all_strings_line(file_name):
-
-                    if self.search_line(
-                        key_name, search, hide_filenames, line, log_format, log_properties, json_output
-                    ):
-                        matched = True
+                    for line in self.get_all_strings_line(file_name):
+                        if self.search_line(
+                            key_name, search, hide_filenames, line, log_format, log_properties, json_output
+                        ):
+                            matched = True
 
         return matched
