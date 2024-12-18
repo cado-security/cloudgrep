@@ -21,7 +21,7 @@ setup(
     download_url="https://github.com/cado-security/cloudgrep/archive/refs/heads/main.zip",
     py_modules=["cloudgrep"],
     install_requires=[
-        "botocor",
+        "botocore",
         "boto3",
         "python-dateutil",
         "azure-storage-blob",
