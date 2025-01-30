@@ -337,7 +337,7 @@ class CloudGrepTests(unittest.TestCase):
         # Actually written to a local file
         fake_content = b"Some Azure log entry that mentions azure target"
         
-        def fake_readinto_me(file_obj: BinaryIO):
+        def fake_readinto_me(file_obj: BinaryIO) -> None:
             file_obj.write(fake_content)
 
         blob_data_mock = MagicMock()
@@ -381,7 +381,7 @@ class CloudGrepTests(unittest.TestCase):
         blob_mock.updated = datetime(2023, 1, 1)
         bucket_mock.list_blobs.return_value = [blob_mock]
 
-        def fake_download_to_filename(local_path: str):
+        def fake_download_to_filename(local_path: str) -> None:
             with open(local_path, "wb") as f:
                 f.write(b"This is some fake file: google target")
 
