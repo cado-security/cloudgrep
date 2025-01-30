@@ -15,8 +15,6 @@ from io import StringIO
 from typing import List
 import json
 import sys
-import argparse
-import logging
 import csv
 
 from cloudgrep.cloud import Cloud
@@ -61,7 +59,7 @@ class CloudGrepTests(unittest.TestCase):
         # This test uploads a couple of logs to mock s3
         # Then searches them
         _BUCKET = "mybucket"
-        _QUERY = "SomeLine"
+        _QUERY = ["SomeLine"]
 
         conn = boto3.resource("s3", region_name="us-east-1")
         conn.create_bucket(Bucket=_BUCKET)
@@ -183,7 +181,7 @@ class CloudGrepTests(unittest.TestCase):
         self.assertIn("SignatureVersion", output)
         self.assertTrue(json.loads(output))
 
-    def test_filter_object_s3_empty_file(self):
+    def test_filter_object_s3_empty_file(self) -> None:
         obj = {
             "LastModified": datetime(2023, 1, 1),
             "Size": 0,
@@ -198,7 +196,7 @@ class CloudGrepTests(unittest.TestCase):
             "Empty file should have been filtered out"
         )
 
-    def test_filter_object_s3_out_of_date_range(self):
+    def test_filter_object_s3_out_of_date_range(self) -> None:
         obj = {
             "LastModified": datetime(2021, 1, 1),
             "Size": 500,
@@ -213,7 +211,7 @@ class CloudGrepTests(unittest.TestCase):
             "Object older than from_date should not match"
         )
 
-    def test_search_logs_csv_format(self):
+    def test_search_logs_csv_format(self) -> None:
         line = "col1,col2\nval1,val2"
         mock_return = [{"col1": "val1", "col2": "val2"}]
         with patch.object(csv, "DictReader", return_value=mock_return):
@@ -229,9 +227,9 @@ class CloudGrepTests(unittest.TestCase):
                 )
         self.assertIn("val1", fake_out.getvalue())
 
-    def test_search_logs_unknown_format(self):
+    def test_search_logs_unknown_format(self) -> None:
         line = '{"foo": "bar"}'
-        with patch("sys.stdout", new=StringIO()) as fake_out:
+        with patch("sys.stdout", new=StringIO()):
             with patch("logging.error") as mock_log:
                 Search().search_logs(
                     line,
@@ -245,7 +243,7 @@ class CloudGrepTests(unittest.TestCase):
         mock_log.assert_called_once()
 
     @mock_aws
-    def test_cloudgrep_search_no_query_file(self):
+    def test_cloudgrep_search_no_query_file(self) -> None:
         s3 = boto3.resource("s3", region_name="us-east-1")
         s3.create_bucket(Bucket="mybucket")
         with open("small.log", "w") as f:
@@ -279,7 +277,7 @@ class CloudGrepTests(unittest.TestCase):
             self.assertIn("hello direct query", output)
 
     @mock_aws
-    def test_cloudgrep_search_with_profile(self):
+    def test_cloudgrep_search_with_profile(self) -> None:
         s3 = boto3.resource("s3", region_name="us-east-1")
         s3.create_bucket(Bucket="prof-bucket")
         with open("small.log", "w") as f:
@@ -311,7 +309,7 @@ class CloudGrepTests(unittest.TestCase):
             )
             mock_setup_session.assert_called_with(profile_name="my_aws_profile")
 
-    def test_main_no_args_shows_help(self):
+    def test_main_no_args_shows_help(self) -> None:
         from cloudgrep.__main__ import main
         with patch.object(sys, "argv", ["prog"]):
             # Argparse prints help to sys.stderr
@@ -359,7 +357,7 @@ def test_search_azure(self) -> None:  # type: ignore
 
 
     @patch("cloudgrep.cloud.BlobServiceClient.from_connection_string")
-    def test_azure_search_mocked(self, mock_service_client):
+    def test_azure_search_mocked(self, mock_service_client) -> None:
         # Mock azure client to do basic azure test
 
         container_client = MagicMock()
@@ -411,7 +409,7 @@ def test_search_azure(self) -> None:  # type: ignore
         self.assertIn("azure target", output, "Should match the azure target text in the downloaded content")
 
     @patch("cloudgrep.cloud.storage.Client")
-    def test_google_search_mocked(self, mock_storage_client):
+    def test_google_search_mocked(self, mock_storage_client) -> None:
         # Basic coverage for gcp search
         bucket_mock = MagicMock()
         mock_storage_client.return_value.get_bucket.return_value = bucket_mock
