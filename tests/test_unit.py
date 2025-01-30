@@ -356,3 +356,98 @@ def test_search_azure(self) -> None:  # type: ignore
         output = fake_out.getvalue().strip()
     self.assertIn("SignatureVersion", output)
     self.assertTrue(json.loads(output))
+
+
+    @patch("cloudgrep.cloud.BlobServiceClient.from_connection_string")
+    def test_azure_search_mocked(self, mock_service_client):
+        # Mock azure client to do basic azure test
+
+        container_client = MagicMock()
+        mock_service_client.return_value.get_container_client.return_value = container_client
+
+        blob_mock = MagicMock()
+        blob_mock.name = "testblob.log"
+        blob_mock.size = 50
+        blob_mock.last_modified = datetime(2022, 1, 1)
+        container_client.list_blobs.return_value = [blob_mock]
+
+        blob_client_mock = MagicMock()
+        container_client.get_blob_client.return_value = blob_client_mock
+
+        # Actually written to a local file
+        fake_content = b"Some Azure log entry that mentions azure target"
+        
+        def fake_readinto_me(file_obj):
+            file_obj.write(fake_content)
+
+        blob_data_mock = MagicMock()
+        blob_data_mock.readinto.side_effect = fake_readinto_me
+        blob_client_mock.download_blob.return_value = blob_data_mock
+
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            CloudGrep().search(
+                bucket=None,
+                account_name="fakeaccount",
+                container_name="fakecontainer",
+                google_bucket=None,
+                query=["azure target"],  # Our search term
+                file=None,
+                yara_file=None,
+                file_size=1000000,
+                prefix=None,
+                key_contains=None,
+                from_date=None,
+                end_date=None,
+                hide_filenames=False,
+                log_type=None,
+                log_format=None,
+                log_properties=[],
+                profile=None,
+                json_output=False,
+            )
+            output = fake_out.getvalue().strip()
+
+        # Check in fake file
+        self.assertIn("azure target", output, "Should match the azure target text in the downloaded content")
+
+    @patch("cloudgrep.cloud.storage.Client")
+    def test_google_search_mocked(self, mock_storage_client):
+        # Basic coverage for gcp search
+        bucket_mock = MagicMock()
+        mock_storage_client.return_value.get_bucket.return_value = bucket_mock
+
+        blob_mock = MagicMock()
+        blob_mock.name = "test_gcs_file.log"
+        blob_mock.updated = datetime(2023, 1, 1)
+        bucket_mock.list_blobs.return_value = [blob_mock]
+
+        def fake_download_to_filename(local_path):
+            with open(local_path, "wb") as f:
+                f.write(b"This is some fake file: google target")
+
+        blob_mock.download_to_filename.side_effect = fake_download_to_filename
+
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            CloudGrep().search(
+                bucket=None,
+                account_name=None,
+                container_name=None,
+                google_bucket="fake-gcs-bucket",
+                query=["google target"],
+                file=None,
+                yara_file=None,
+                file_size=1000000,
+                prefix=None,
+                key_contains=None,
+                from_date=None,
+                end_date=None,
+                hide_filenames=False,
+                log_type=None,
+                log_format=None,
+                log_properties=[],
+                profile=None,
+                json_output=False,
+            )
+            output = fake_out.getvalue().strip()
+
+        self.assertIn("google target", output, "Should match the google target text in the downloaded content")
