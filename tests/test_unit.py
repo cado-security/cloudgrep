@@ -12,7 +12,7 @@ from datetime import datetime
 from unittest.mock import patch, MagicMock
 import yara  # type: ignore
 from io import StringIO
-from typing import List
+from typing import List, BinaryIO
 import json
 import sys
 import csv
@@ -318,44 +318,6 @@ class CloudGrepTests(unittest.TestCase):
                     main()
                 self.assertIn("usage: prog", fake_err.getvalue())
 
-
-def test_search_azure(self) -> None:  # type: ignore
-    log_format = "json"
-    log_properties = ["data"]
-    Search().search_file(
-        f"{BASE_PATH}/data/bad_azure.json",
-        "bad_azure.json",
-        ["azure.gz"],
-        False,
-        None,
-        log_format,
-        log_properties,
-    )
-    Search().search_file(
-        f"{BASE_PATH}/data/azure.json",
-        "azure.json",
-        ["azure.gz"],
-        False,
-        None,
-        log_format,
-        log_properties,
-    )
-    with patch("sys.stdout", new=StringIO()) as fake_out:
-        Search().search_file(
-            f"{BASE_PATH}/data/azure_singleline.json",
-            "azure_singleline.json",
-            ["azure.gz"],
-            False,
-            None,
-            log_format,
-            log_properties,
-            True,
-        )
-        output = fake_out.getvalue().strip()
-    self.assertIn("SignatureVersion", output)
-    self.assertTrue(json.loads(output))
-
-
     @patch("cloudgrep.cloud.BlobServiceClient.from_connection_string")
     def test_azure_search_mocked(self, mock_service_client: MagicMock) -> None:
         # Mock azure client to do basic azure test
@@ -375,7 +337,7 @@ def test_search_azure(self) -> None:  # type: ignore
         # Actually written to a local file
         fake_content = b"Some Azure log entry that mentions azure target"
         
-        def fake_readinto_me(file_obj: bytes):
+        def fake_readinto_me(file_obj: BinaryIO):
             file_obj.write(fake_content)
 
         blob_data_mock = MagicMock()
