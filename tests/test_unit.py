@@ -357,7 +357,7 @@ def test_search_azure(self) -> None:  # type: ignore
 
 
     @patch("cloudgrep.cloud.BlobServiceClient.from_connection_string")
-    def test_azure_search_mocked(self, mock_service_client) -> None:
+    def test_azure_search_mocked(self, mock_service_client: MagicMock) -> None:
         # Mock azure client to do basic azure test
 
         container_client = MagicMock()
@@ -375,7 +375,7 @@ def test_search_azure(self) -> None:  # type: ignore
         # Actually written to a local file
         fake_content = b"Some Azure log entry that mentions azure target"
         
-        def fake_readinto_me(file_obj):
+        def fake_readinto_me(file_obj: bytes):
             file_obj.write(fake_content)
 
         blob_data_mock = MagicMock()
@@ -409,7 +409,7 @@ def test_search_azure(self) -> None:  # type: ignore
         self.assertIn("azure target", output, "Should match the azure target text in the downloaded content")
 
     @patch("cloudgrep.cloud.storage.Client")
-    def test_google_search_mocked(self, mock_storage_client) -> None:
+    def test_google_search_mocked(self, mock_storage_client: MagicMock) -> None:
         # Basic coverage for gcp search
         bucket_mock = MagicMock()
         mock_storage_client.return_value.get_bucket.return_value = bucket_mock
@@ -419,7 +419,7 @@ def test_search_azure(self) -> None:  # type: ignore
         blob_mock.updated = datetime(2023, 1, 1)
         bucket_mock.list_blobs.return_value = [blob_mock]
 
-        def fake_download_to_filename(local_path):
+        def fake_download_to_filename(local_path: str):
             with open(local_path, "wb") as f:
                 f.write(b"This is some fake file: google target")
 
