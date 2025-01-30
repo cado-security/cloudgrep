@@ -17,7 +17,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.13'
+        python-version: '3.10'
     - name: Set up Environment
       run: |
         python -m pip install --upgrade pip --default-timeout=100
@@ -41,7 +41,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.13'
+        python-version: '3.10'
     - name: Set up Environment
       run: |
         python -m pip install --upgrade pip --default-timeout=100
@@ -65,7 +65,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.13'
+        python-version: '3.10'
     - name: Setup Environment
       run: |
         pip install -r ./requirements.txt
@@ -88,7 +88,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.13'
+        python-version: '3.10'
     - name: Setup Environment
       run: |
         pip3 install -r ./requirements.txt
