@@ -178,7 +178,7 @@ class Cloud:
             return False  # Object was modified before the from_date
         if last_modified and to_date and last_modified > to_date:
             return False  # Object was modified after the to_date
-        if obj["size"] == 0 or obj["size"] > file_size:
+        if obj["size"] == 0 or int(obj["size"]) > file_size:
             return False  # Object is empty or too large
         if key_contains and key_contains not in obj["name"]:
             return False  # Object does not contain the key_contains string

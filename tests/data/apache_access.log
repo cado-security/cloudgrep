@@ -8,7 +8,7 @@
 40.76.227.225 - - [19/Jul/2020:20:39:22 +0000] "GET /wp-links-opml.php?user-agent=Mozilla%2F5.0+%28Macintosh%3B+Intel+Mac+OS+X+10_11_6%29+AppleWebKit%2F537.36+%28KHTML%2C+like+Gecko%29+Chrome%2F53.0.2785.143+Safari%2F537.36 HTTP/1.1" 500 185 "-" "python-requests/2.23.0"
 40.76.227.225 - - [19/Jul/2020:20:39:22 +0000] "GET /wp-content/themes/???/style.css HTTP/1.1" 200 203 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36"
 45.76.91.240 - - [19/Jul/2020:20:39:27 +0000] "HEAD / HTTP/1.1" 200 255 "-" "-"
-54.165.221.210 - - [19/Jul/2020:20:39:33 +0000] "GET / HTTP/1.1" 200 3324 "https://sucuri.net" "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; rv:11.0) like Gecko"
+54.165.221.210 - - [19/Jul/2020:20:39:33 +0000] "GET / HTTP/1.1" 200 3324 "https://sucuri.net" "Mozilla/5.0 SomeLine (Windows NT 6.3; WOW64; Trident/7.0; rv:11.0) like Gecko"
 54.165.221.210 - - [19/Jul/2020:20:39:33 +0000] "TRACE / HTTP/1.1" 405 506 "-" "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
 54.165.221.210 - - [19/Jul/2020:20:39:33 +0000] "GET /.git/HEAD HTTP/1.1" 404 462 "https://sucuri.net" "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; rv:11.0) like Gecko"
 54.165.221.210 - - [19/Jul/2020:20:39:33 +0000] "GET /404javascript.js HTTP/1.1" 404 462 "https://www.google.com/url/?sa=t" "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; rv:11.0) like Gecko"
