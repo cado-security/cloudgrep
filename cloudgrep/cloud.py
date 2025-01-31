@@ -17,6 +17,16 @@ class Cloud:
     def __init__(self) -> None:
         self.search = Search()
 
+    def _download_and_search_in_parallel(self, files: List[str], worker_func) -> int:
+        """ Use ThreadPoolExecutorto download every file
+        Returns number of matched files """
+        total_matched = 0
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(worker_func, key) for key in files]
+            for fut in concurrent.futures.as_completed(futures):
+                total_matched += fut.result()
+        return total_matched
+
     def download_from_s3_multithread(
         self,
         bucket: str,
@@ -50,18 +60,11 @@ class Cloud:
                 return 0
             finally:
                 try:
-                    # Cleanup
                     os.remove(tmp_name)
                 except OSError:
                     pass
 
-        total_matched = 0
-        # Use ThreadPoolExecutor to download and search files
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(_download_search_s3, k) for k in files]
-            for fut in concurrent.futures.as_completed(futures):
-                total_matched += fut.result()
-        return total_matched
+        return self._download_and_search_in_parallel(files, _download_search_s3)
 
     def download_from_azure(
         self,
@@ -117,18 +120,11 @@ class Cloud:
                 return 0
             finally:
                 try:
-                    import os
-
                     os.remove(tmp_name)
                 except OSError:
                     pass
 
-        total_matched = 0
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(_download_search_azure, k) for k in files]
-            for fut in concurrent.futures.as_completed(futures):
-                total_matched += fut.result()
-        return total_matched
+        return self._download_and_search_in_parallel(files, _download_search_azure)
 
     def download_from_google(
         self,
@@ -169,18 +165,11 @@ class Cloud:
                 return 0
             finally:
                 try:
-                    import os
-
                     os.remove(tmp_name)
                 except OSError:
                     pass
 
-        total_matched = 0
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(_download_and_search_google, k) for k in files]
-            for fut in concurrent.futures.as_completed(futures):
-                total_matched += fut.result()
-        return total_matched
+        return self._download_and_search_in_parallel(files, _download_and_search_google)
 
     def filter_object(
         self,
