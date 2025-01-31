@@ -14,7 +14,7 @@ from cloudgrep.search import Search
 
 
 class Cloud:
-    def __init__(self):
+    def __init__(self) -> None:
         self.search = Search()
 
     def download_from_s3_multithread(
