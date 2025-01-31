@@ -136,15 +136,23 @@ class Search:
         elif key_name.endswith(".zip"):
             with tempfile.TemporaryDirectory() as tempdir, zipfile.ZipFile(file_name, "r") as zf:
                 zf.extractall(tempdir)
-                return any(
-                    # Process the extracted files
-                    process_lines(
-                        json.load(open(os.path.join(tempdir, filename)))
-                        if account_name
-                        else open(os.path.join(tempdir, filename))
-                    )
-                    # Search all files in the zip file
-                    for filename in os.listdir(tempdir)
-                    if os.path.isfile(os.path.join(tempdir, filename))
-                )
+                
+                matched_any = False
+                for extracted_filename in os.listdir(tempdir):
+                    extracted_path = os.path.join(tempdir, extracted_filename)
+                    if not os.path.isfile(extracted_path):
+                        continue
+
+                    if account_name:
+                        with open(extracted_path, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        if process_lines(data):
+                            matched_any = True
+                    else:
+                        with open(extracted_path, "r", encoding="utf-8") as f:
+                            if process_lines(f):
+                                matched_any = True
+
+                return matched_any
+
         return process_lines(self.get_all_strings_line(file_name))
