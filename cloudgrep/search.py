@@ -124,7 +124,7 @@ class Search:
         if yara_rules:
             return self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, json_output)
 
-        def process_lines(lines) -> bool:
+        def process_lines(lines: Any) -> bool:
             return any(
                 self.search_line(key_name, search, hide_filenames, line, log_format, log_properties, json_output)
                 for line in lines
