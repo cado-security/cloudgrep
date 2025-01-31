@@ -2,6 +2,7 @@
 Basic unit tests for Cloud Grep
 python3 -m unittest discover tests
 """
+
 import unittest
 import os
 import boto3
@@ -22,8 +23,8 @@ from cloudgrep.search import Search
 from cloudgrep.cloudgrep import CloudGrep
 
 
-
 BASE_PATH = os.path.dirname(os.path.realpath(__file__))
+
 
 class CloudGrepTests(unittest.TestCase):
     """Tests for Cloud Grep"""
@@ -36,15 +37,11 @@ class CloudGrepTests(unittest.TestCase):
         self.assertIn("SomeLine", Search().get_all_strings_line(f"{BASE_PATH}/data/14_3.log"))
 
     def test_gzip(self) -> None:
-        found = Search().search_file(
-            f"{BASE_PATH}/data/000000.gz", "000000.gz", ["Running on machine"], False, None
-        )
+        found = Search().search_file(f"{BASE_PATH}/data/000000.gz", "000000.gz", ["Running on machine"], False, None)
         self.assertTrue(found)
 
     def test_zip(self) -> None:
-        found = Search().search_file(
-            f"{BASE_PATH}/data/000000.zip", "000000.zip", ["Running on machine"], False, None
-        )
+        found = Search().search_file(f"{BASE_PATH}/data/000000.zip", "000000.zip", ["Running on machine"], False, None)
         self.assertTrue(found)
 
     def test_print_match(self) -> None:
@@ -182,33 +179,25 @@ class CloudGrepTests(unittest.TestCase):
         self.assertTrue(json.loads(output))
 
     def test_filter_object_s3_empty_file(self) -> None:
-        obj = {
-            "LastModified": datetime(2023, 1, 1),
-            "Size": 0,
-            "Key": "empty_file.log"
-        }
+        obj = {"LastModified": datetime(2023, 1, 1), "Size": 0, "Key": "empty_file.log"}
         key_contains = "empty"
         from_date = datetime(2022, 1, 1)
         to_date = datetime(2024, 1, 1)
         file_size = 10000
         self.assertFalse(
             Cloud().filter_object(obj, key_contains, from_date, to_date, file_size),
-            "Empty file should have been filtered out"
+            "Empty file should have been filtered out",
         )
 
     def test_filter_object_s3_out_of_date_range(self) -> None:
-        obj = {
-            "LastModified": datetime(2021, 1, 1),
-            "Size": 500,
-            "Key": "old_file.log"
-        }
+        obj = {"LastModified": datetime(2021, 1, 1), "Size": 500, "Key": "old_file.log"}
         key_contains = "old"
         from_date = datetime(2022, 1, 1)
         to_date = datetime(2024, 1, 1)
         file_size = 10000
         self.assertFalse(
             Cloud().filter_object(obj, key_contains, from_date, to_date, file_size),
-            "Object older than from_date should not match"
+            "Object older than from_date should not match",
         )
 
     def test_search_logs_csv_format(self) -> None:
@@ -223,7 +212,7 @@ class CloudGrepTests(unittest.TestCase):
                     hide_filenames=False,
                     log_format="csv",
                     log_properties=[],
-                    json_output=False
+                    json_output=False,
                 )
         self.assertIn("val1", fake_out.getvalue())
 
@@ -238,7 +227,7 @@ class CloudGrepTests(unittest.TestCase):
                     hide_filenames=False,
                     log_format="not_a_real_format",
                     log_properties=[],
-                    json_output=False
+                    json_output=False,
                 )
         mock_log.assert_called_once()
 
@@ -271,7 +260,7 @@ class CloudGrepTests(unittest.TestCase):
                 log_format=None,
                 log_properties=[],
                 profile=None,
-                json_output=False
+                json_output=False,
             )
             output = fake_out.getvalue().strip()
             self.assertIn("hello direct query", output)
@@ -305,12 +294,13 @@ class CloudGrepTests(unittest.TestCase):
                 log_format=None,
                 log_properties=[],
                 profile="my_aws_profile",
-                json_output=False
+                json_output=False,
             )
             mock_setup_session.assert_called_with(profile_name="my_aws_profile")
 
     def test_main_no_args_shows_help(self) -> None:
         from cloudgrep.__main__ import main
+
         with patch.object(sys, "argv", ["prog"]):
             # Argparse prints help to sys.stderr
             with patch("sys.stderr", new=StringIO()) as fake_err:
@@ -336,7 +326,7 @@ class CloudGrepTests(unittest.TestCase):
 
         # Actually written to a local file
         fake_content = b"Some Azure log entry that mentions azure target"
-        
+
         def fake_readinto_me(file_obj: BinaryIO) -> None:
             file_obj.write(fake_content)
 

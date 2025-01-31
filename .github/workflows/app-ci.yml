@@ -53,7 +53,7 @@ jobs:
         ./release/generate_linux_binary.sh
         chmod +x ./dist/cloudgrep
         ./dist/cloudgrep -h # check it doesn't return non 0 exit status, i.e. crash
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
           name: dist-linux
           path: ./dist/*
@@ -76,7 +76,7 @@ jobs:
         cd release
         ./generate_windows_binary.bat
         ./dist/cloudgrep.exe -h
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
           name: dist-windows
           path: ./release/dist/*
@@ -99,7 +99,7 @@ jobs:
         ./release/generate_linux_binary.sh
         chmod +x ./dist/cloudgrep
         ./dist/cloudgrep -h # check it doesn't return non 0 exit status, i.e. crash
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
           name: dist-osx
           path: ./dist/*

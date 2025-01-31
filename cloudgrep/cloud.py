@@ -1,11 +1,12 @@
 import boto3
+import os
 from azure.storage.blob import BlobServiceClient, BlobProperties
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
 from google.cloud import storage  # type: ignore
 from datetime import datetime
 import botocore
-import concurrent
+import concurrent.futures
 import tempfile
 from typing import Iterator, Optional, List, Any
 import logging
@@ -13,6 +14,9 @@ from cloudgrep.search import Search
 
 
 class Cloud:
+    def __init__(self) -> None:
+        self.search = Search()
+
     def download_from_s3_multithread(
         self,
         bucket: str,
@@ -26,34 +30,38 @@ class Cloud:
     ) -> int:
         """Use ThreadPoolExecutor and boto3 to download every file in the bucket from s3
         Returns number of matched files"""
-        client_config = botocore.config.Config(
-            max_pool_connections=64,
-        )
-        matched_count = 0
-        s3 = boto3.client("s3", config=client_config)
+        if not log_properties:
+            log_properties = []
 
-        # Create a function to download the files
-        def download_file(key: str) -> None:
-            # Get meta data of file in s3 using boto3
-            with tempfile.NamedTemporaryFile() as tmp:
-                tmp.close() # fixes issue on windows
-                logging.info(f"Downloading {bucket} {key} to {tmp.name}")
-                s3.download_file(bucket, key, tmp.name)
-                matched = Search().search_file(
-                    tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+        s3 = boto3.client("s3", config=botocore.config.Config(max_pool_connections=64))
+
+        def _download_search_s3(key: str) -> int:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp_name = tmp.name
+            try:
+                logging.info(f"Downloading s3://{bucket}/{key} to {tmp_name}")
+                s3.download_file(bucket, key, tmp_name)
+                matched = self.search.search_file(
+                    tmp_name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
                 )
-                if matched:
-                    nonlocal matched_count
-                    matched_count += 1
+                return 1 if matched else 0
+            except Exception as e:
+                logging.error(f"Error downloading or searching {key}: {e}")
+                return 0
+            finally:
+                try:
+                    # Cleanup
+                    os.remove(tmp_name)
+                except OSError:
+                    pass
 
-        # Use ThreadPoolExecutor to download the files
-        with concurrent.futures.ThreadPoolExecutor() as executor:  # type: ignore
-            executor.map(download_file, files)
-        # For debugging, run in a single thread for clearer logging:
-        # for file in files:
-        #    download_file(file)
-
-        return matched_count
+        total_matched = 0
+        # Use ThreadPoolExecutor to download and search files
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(_download_search_s3, k) for k in files]
+            for fut in concurrent.futures.as_completed(futures):
+                total_matched += fut.result()
+        return total_matched
 
     def download_from_azure(
         self,
@@ -64,50 +72,63 @@ class Cloud:
         hide_filenames: bool,
         yara_rules: Any,
         log_format: Optional[str] = None,
-        log_properties: List[str] = [],
-        json_output: Optional[bool] = False,
+        log_properties: Optional[List[str]] = None,
+        json_output: bool = False,
     ) -> int:
         """Download every file in the container from azure
         Returns number of matched files"""
+        if not log_properties:
+            log_properties = []
+
         default_credential = DefaultAzureCredential()
-        matched_count = 0
         blob_service_client = BlobServiceClient.from_connection_string(
             f"DefaultEndpointsProtocol=https;AccountName={account_name};EndpointSuffix=core.windows.net",
             credential=default_credential,
         )
         container_client = blob_service_client.get_container_client(container_name)
 
-        def download_file(key: str) -> None:
-            with tempfile.NamedTemporaryFile() as tmp:
-                tmp.close() # fixes issue on windows
-                logging.info(f"Downloading {account_name}/{container_name} {key} to {tmp.name}")
+        def _download_search_azure(key: str) -> int:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp_name = tmp.name
+            try:
+                logging.info(f"Downloading azure://{account_name}/{container_name}/{key} to {tmp_name}")
+                blob_client = container_client.get_blob_client(key)
+                with open(tmp_name, "wb") as my_blob:
+                    blob_data = blob_client.download_blob()
+                    blob_data.readinto(my_blob)
+
+                matched = self.search.search_file(
+                    tmp_name,
+                    key,
+                    query,
+                    hide_filenames,
+                    yara_rules,
+                    log_format,
+                    log_properties,
+                    json_output,
+                    account_name,
+                )
+                return 1 if matched else 0
+            except ResourceNotFoundError:
+                logging.info(f"File {key} not found in {account_name}/{container_name}")
+                return 0
+            except Exception as e:
+                logging.error(f"Error downloading or searching {key}: {e}")
+                return 0
+            finally:
                 try:
-                    blob_client = container_client.get_blob_client(key)
-                    with open(tmp.name, "wb") as my_blob:
-                        blob_data = blob_client.download_blob()
-                        blob_data.readinto(my_blob)
-                    matched = Search().search_file(
-                        tmp.name,
-                        key,
-                        query,
-                        hide_filenames,
-                        yara_rules,
-                        log_format,
-                        log_properties,
-                        json_output,
-                        account_name,
-                    )
-                    if matched:
-                        nonlocal matched_count
-                        matched_count += 1
-                except ResourceNotFoundError:
-                    logging.info(f"File {key} not found in {account_name}/{container_name}")
+                    import os
 
-        # Use ThreadPoolExecutor to download the files
+                    os.remove(tmp_name)
+                except OSError:
+                    pass
+
+        total_matched = 0
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(download_file, files)
-
-        return matched_count
+            futures = [executor.submit(_download_search_azure, k) for k in files]
+            for fut in concurrent.futures.as_completed(futures):
+                total_matched += fut.result()
+        return total_matched
 
     def download_from_google(
         self,
@@ -117,34 +138,49 @@ class Cloud:
         hide_filenames: bool,
         yara_rules: Any,
         log_format: Optional[str] = None,
-        log_properties: List[str] = [],
-        json_output: Optional[bool] = False,
+        log_properties: Optional[List[str]] = None,
+        json_output: bool = False,
     ) -> int:
         """Download every file in the bucket from google
         Returns number of matched files"""
+        if not log_properties:
+            log_properties = []
 
-        matched_count = 0
         client = storage.Client()
         bucket_gcp = client.get_bucket(bucket)
 
-        def download_file(key: str) -> None:
-            with tempfile.NamedTemporaryFile() as tmp:
-                tmp.close() # fixes issue on windows
-                logging.info(f"Downloading {bucket} {key} to {tmp.name}")
+        def _download_and_search_google(key: str) -> int:
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                tmp_name = tmp.name
+            try:
+                logging.info(f"Downloading gs://{bucket}/{key} to {tmp_name}")
                 blob = bucket_gcp.get_blob(key)
-                blob.download_to_filename(tmp.name)
-                matched = Search().search_file(
-                    tmp.name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                if blob is None:
+                    logging.warning(f"Blob not found: {key}")
+                    return 0
+                blob.download_to_filename(tmp_name)
+
+                matched = self.search.search_file(
+                    tmp_name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
                 )
-                if matched:
-                    nonlocal matched_count
-                    matched_count += 1
+                return 1 if matched else 0
+            except Exception as e:
+                logging.error(f"Error downloading or searching {key}: {e}")
+                return 0
+            finally:
+                try:
+                    import os
 
-        # Use ThreadPoolExecutor to download the files
+                    os.remove(tmp_name)
+                except OSError:
+                    pass
+
+        total_matched = 0
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(download_file, files)
-
-        return matched_count
+            futures = [executor.submit(_download_and_search_google, k) for k in files]
+            for fut in concurrent.futures.as_completed(futures):
+                total_matched += fut.result()
+        return total_matched
 
     def filter_object(
         self,
@@ -154,12 +190,13 @@ class Cloud:
         to_date: Optional[datetime],
         file_size: int,
     ) -> bool:
+        """Filter S3 objects by date range, file size, and substring in key."""
         last_modified = obj["LastModified"]
         if last_modified and from_date and from_date > last_modified:
             return False  # Object was modified before the from_date
         if last_modified and to_date and last_modified > to_date:
             return False  # Object was modified after the to_date
-        if obj["Size"] == 0 or obj["Size"] > file_size:
+        if obj["Size"] == 0 or int(obj["Size"]) > file_size:
             return False  # Object is empty or too large
         if key_contains and key_contains not in obj["Key"]:
             return False  # Object does not contain the key_contains string
@@ -173,15 +210,16 @@ class Cloud:
         to_date: Optional[datetime],
         file_size: int,
     ) -> bool:
-        last_modified = obj["last_modified"]
+        """Filter Azure blob objects similarly."""
+        last_modified = obj["last_modified"]  # type: ignore
         if last_modified and from_date and from_date > last_modified:
-            return False  # Object was modified before the from_date
+            return False
         if last_modified and to_date and last_modified > to_date:
-            return False  # Object was modified after the to_date
+            return False
         if obj["size"] == 0 or int(obj["size"]) > file_size:
-            return False  # Object is empty or too large
+            return False
         if key_contains and key_contains not in obj["name"]:
-            return False  # Object does not contain the key_contains string
+            return False
         return True
 
     def filter_object_google(
@@ -191,6 +229,7 @@ class Cloud:
         from_date: Optional[datetime],
         to_date: Optional[datetime],
     ) -> bool:
+        """Filter objects in GCP"""
         last_modified = obj.updated
         if last_modified and from_date and from_date > last_modified:
             return False
@@ -209,7 +248,7 @@ class Cloud:
         end_date: Optional[datetime],
         file_size: int,
     ) -> Iterator[str]:
-        """Get all objects in a bucket with a given prefix"""
+        """Get objects in S3"""
         s3 = boto3.client("s3")
         paginator = s3.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(Bucket=bucket, Prefix=prefix)
@@ -229,8 +268,8 @@ class Cloud:
         end_date: Optional[datetime],
         file_size: int,
     ) -> Iterator[str]:
+        """Get all objects in Azure storage container with a given prefix"""
         default_credential = DefaultAzureCredential()
-        """ Get all objects in Azure storage container with a given prefix """
         blob_service_client = BlobServiceClient.from_connection_string(
             f"DefaultEndpointsProtocol=https;AccountName={account_name};EndpointSuffix=core.windows.net",
             credential=default_credential,
@@ -239,14 +278,7 @@ class Cloud:
         blobs = container_client.list_blobs(name_starts_with=prefix)
 
         for blob in blobs:
-
-            if self.filter_object_azure(
-                blob,
-                key_contains,
-                from_date,
-                end_date,
-                file_size,
-            ):
+            if self.filter_object_azure(blob, key_contains, from_date, end_date, file_size):
                 yield blob.name
 
     def get_google_objects(
@@ -262,10 +294,5 @@ class Cloud:
         bucket_gcp = client.get_bucket(bucket)
         blobs = bucket_gcp.list_blobs(prefix=prefix)
         for blob in blobs:
-            if self.filter_object_google(
-                blob,
-                key_contains,
-                from_date,
-                end_date,
-            ):
+            if self.filter_object_google(blob, key_contains, from_date, end_date):
                 yield blob.name
