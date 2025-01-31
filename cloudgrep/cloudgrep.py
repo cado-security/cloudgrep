@@ -121,7 +121,7 @@ class CloudGrep:
         self,
         bucket: str,
         query: List[str],
-        yara_rules,
+        yara_rules: Any,
         file_size: int,
         prefix: Optional[str],
         key_contains: Optional[str],

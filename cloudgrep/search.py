@@ -16,34 +16,42 @@ class Search:
         """
         with open(file_path, "rb") as f:
             read_bytes = f.read()
-            b = read_bytes.decode("utf-8", "ignore")
-            b = b.replace("\n", "\r")
-            string_list = b.split("\r")
-            return string_list
+            return read_bytes.decode("utf-8", "ignore").replace("\n", "\r").split("\r")
 
     def print_match(self, matched_line_dict: dict, hide_filenames: bool, json_output: Optional[bool]) -> None:
         """Print matched line"""
         if json_output:
-            if hide_filenames:
-                matched_line_dict.pop("key_name")
+            matched_line_dict.pop("key_name", None) if hide_filenames else None
             try:
-
                 print(json.dumps(matched_line_dict))
             except TypeError:
-
                 print(str(matched_line_dict))
         else:
-            line = ""
-            if "line" in matched_line_dict:
-                line = matched_line_dict["line"]
+            line = matched_line_dict.get("line", "")
             if "match_rule" in matched_line_dict:
                 line = f"{matched_line_dict['match_rule']}: {matched_line_dict['match_strings']}"
+            print(line if hide_filenames else f"{matched_line_dict['key_name']}: {line}")
 
-            if not hide_filenames:
-                print(f"{matched_line_dict['key_name']}: {line}")
-            else:
+    def parse_logs(self, line: str, log_format: Optional[str]) -> Any:
+        """Parse input log line based on format"""
+        try:
+            if log_format == "json":
+                return json.loads(line)
+            elif log_format == "csv":
+                return list(csv.DictReader([line]))
+            elif log_format:
+                logging.error(f"Invalid log format: {log_format}")
+        except (json.JSONDecodeError, csv.Error) as e:
+            logging.error(f"Invalid {log_format} format in line: {line} ({e})")
+        return None
 
-                print(line)
+    def extract_log_entries(self, line_parsed: Any, log_properties: List[str]) -> List[Any]:
+        """Extract properties in log entries"""
+        if log_properties:
+            for log_property in log_properties:
+                if isinstance(line_parsed, dict):
+                    line_parsed = line_parsed.get(log_property, None)
+        return line_parsed if isinstance(line_parsed, list) else [line_parsed]
 
     def search_logs(
         self,
@@ -55,42 +63,14 @@ class Search:
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
     ) -> None:
-        """Regex search of each log record in input line"""
-        # Parse input line based on defined format.
-        match log_format:
-            case "json":
-                try:
-                    line_parsed = json.loads(line)
-                except json.JSONDecodeError:
-                    logging.error(f"Invalid JSON in line: {line}")
-                    return None
-            case "csv":
-                line_parsed = csv.DictReader(line)
-            case _:
-                logging.error(
-                    f"Invalid log_format value ('{log_format}') in switch statement in 'search_logs' function, so defaulting to 'json'."
-                )
-                # Default to JSON format.
-                log_format = "json"
-                line_parsed = json.loads(line)
+        """Search log records in parsed logs"""
+        line_parsed = self.parse_logs(line, log_format)
+        if not line_parsed:
+            return
 
-        # Step into property/properties to get to final list of lines for per-line searching.
-        if log_properties != None:
-
-            for log_property in log_properties:
-                if line_parsed:
-                    line_parsed = line_parsed.get(log_property, None)
-
-        # Ensure line_parsed is iterable.
-        if type(line_parsed) != list:
-            line_parsed = [line_parsed]
-
-        # Perform per-line searching.
-        for record in line_parsed:
+        for record in self.extract_log_entries(line_parsed, log_properties):
             if re.search(search, json.dumps(record)):
-
-                matched_line_dict = {"key_name": key_name, "query": search, "line": record}
-                self.print_match(matched_line_dict, hide_filenames, json_output)
+                self.print_match({"key_name": key_name, "query": search, "line": record}, hide_filenames, json_output)
 
     def search_line(
         self,
@@ -103,30 +83,29 @@ class Search:
         json_output: Optional[bool] = False,
     ) -> bool:
         """Regex search of the line"""
-        matched = False
-        for cur_search in search:
-            if re.search(cur_search, line):
-
-                if log_format != None:
+        matched = any(re.search(cur_search, line) for cur_search in search)
+        if matched:
+            if log_format:
+                for cur_search in search:
                     self.search_logs(
                         line, key_name, cur_search, hide_filenames, log_format, log_properties, json_output
                     )
-                else:
-
-                    matched_line_dict = {"key_name": key_name, "query": cur_search, "line": line}
-                    self.print_match(matched_line_dict, hide_filenames, json_output)
-                matched = True
+            else:
+                self.print_match({"key_name": key_name, "query": search, "line": line}, hide_filenames, json_output)
         return matched
 
-    def yara_scan_file(self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: Any, json_output: Optional[bool] = False) -> bool:  # type: ignore
-        matched = False
+    def yara_scan_file(
+        self, file_name: str, key_name: str, hide_filenames: bool, yara_rules: Any, json_output: Optional[bool] = False
+    ) -> bool:
+        """Run Yara scan on a file"""
         matches = yara_rules.match(file_name)
-        if matches:
-            for match in matches:
-                matched_line_dict = {"key_name": key_name, "match_rule": match.rule, "match_strings": match.strings}
-                self.print_match(matched_line_dict, hide_filenames, json_output)
-                matched = True
-        return matched
+        for match in matches:
+            self.print_match(
+                {"key_name": key_name, "match_rule": match.rule, "match_strings": match.strings},
+                hide_filenames,
+                json_output,
+            )
+        return bool(matches)
 
     def search_file(
         self,
@@ -141,82 +120,31 @@ class Search:
         account_name: Optional[str] = None,
     ) -> bool:
         """Regex search of the file line by line"""
-        matched = False
-
         logging.info(f"Searching {file_name} for {search}")
         if yara_rules:
-            matched = self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, json_output)
-        else:
-            if key_name.endswith(".gz"):
-                with gzip.open(file_name, "rt") as f:
-                    if account_name:
-                        try:
-                            # Try to load the file as JSON
-                            json_data = json.load(f)
-                            for i in range(len(json_data)):
-                                data = json_data[i]
-                                line = json.dumps(data)
-                                if self.search_line(
-                                    key_name, search, hide_filenames, line, log_format, log_properties, json_output
-                                ):
-                                    matched = True
-                        except json.JSONDecodeError:
-                            logging.info(f"File {file_name} is not JSON")
-                    else:
-                        for line in f:
+            return self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, json_output)
 
-                            if self.search_line(
-                                key_name, search, hide_filenames, line, log_format, log_properties, json_output
-                            ):
-                                matched = True
-            elif key_name.endswith(".zip"):
-                with tempfile.TemporaryDirectory() as tempdir:
-                    with zipfile.ZipFile(file_name, "r") as zf:
-                        zf.extractall(tempdir)
-                        logging.info(f"Extracted {file_name} to {tempdir}")
-                        for filename in os.listdir(tempdir):
-                            logging.info(f"Searching in zip {filename}")
-                            if os.path.isfile(os.path.join(tempdir, filename)):
-                                with open(os.path.join(tempdir, filename)) as f:
-                                    if account_name:
-                                        if account_name:
-                                            try:
-                                                json_data = json.load(f)
-                                                for i in range(len(json_data)):
-                                                    data = json_data[i]
-                                                    line = json.dumps(data)
+        def process_lines(lines):
+            return any(
+                self.search_line(key_name, search, hide_filenames, line, log_format, log_properties, json_output)
+                for line in lines
+            )
 
-                                                    if self.search_line(
-                                                        key_name,
-                                                        search,
-                                                        hide_filenames,
-                                                        line,
-                                                        log_format,
-                                                        log_properties,
-                                                        json_output,
-                                                    ):
-                                                        matched = True
-                                            except json.JSONDecodeError:
-                                                logging.info(f"File {file_name} is not JSON")
-                                    else:
-                                        for line in f:
-                                            if self.search_line(
-                                                f"{key_name}/{filename}",
-                                                search,
-                                                hide_filenames,
-                                                line,
-                                                log_format,
-                                                log_properties,
-                                                json_output,
-                                            ):
-                                                matched = True
-            else:
-
-                for line in self.get_all_strings_line(file_name):
-
-                    if self.search_line(
-                        key_name, search, hide_filenames, line, log_format, log_properties, json_output
-                    ):
-                        matched = True
-
-        return matched
+        if key_name.endswith(".gz"):
+            with gzip.open(file_name, "rt") as f:
+                return process_lines(json.load(f) if account_name else f)
+        elif key_name.endswith(".zip"):
+            with tempfile.TemporaryDirectory() as tempdir, zipfile.ZipFile(file_name, "r") as zf:
+                zf.extractall(tempdir)
+                return any(
+                    # Process the extracted files
+                    process_lines(
+                        json.load(open(os.path.join(tempdir, filename)))
+                        if account_name
+                        else open(os.path.join(tempdir, filename))
+                    )
+                    # Search all files in the zip file
+                    for filename in os.listdir(tempdir)
+                    if os.path.isfile(os.path.join(tempdir, filename))
+                )
+        return process_lines(self.get_all_strings_line(file_name))
