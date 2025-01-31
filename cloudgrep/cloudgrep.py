@@ -1,7 +1,6 @@
 import boto3
-from datetime import timezone, datetime
-from dateutil.parser import parse
-from typing import Optional, List
+from datetime import datetime
+from typing import Optional, List, Any
 import logging
 import yara  # type: ignore
 
@@ -38,8 +37,8 @@ class CloudGrep:
         profile: Optional[str] = None,
         json_output: bool = False,
     ) -> None:
-        """ Search query/queries across cloud storage """
-        
+        """Search query/queries across cloud storage"""
+
         # Load queries from a file if given
         if not query and file:
             logging.debug(f"Loading queries in from {file}")
@@ -66,7 +65,7 @@ class CloudGrep:
                 logging.error(f"Invalid log_type: '{log_type}'")
                 return
         if log_properties is None:
-            log_properties = [] # default
+            log_properties = []  # default
 
         # Search given cloud storage
         if bucket:
@@ -133,7 +132,7 @@ class CloudGrep:
         log_properties: List[str],
         json_output: bool,
     ) -> None:
-        """ Search S3 bucket for query """
+        """Search S3 bucket for query"""
         matching_keys = list(self.cloud.get_objects(bucket, prefix, key_contains, from_date, end_date, file_size))
         s3_client = boto3.client("s3")
         region = s3_client.get_bucket_location(Bucket=bucket)
@@ -151,7 +150,7 @@ class CloudGrep:
         account_name: str,
         container_name: str,
         query: List[str],
-        yara_rules,
+        yara_rules: Any,
         file_size: int,
         prefix: Optional[str],
         key_contains: Optional[str],
@@ -162,16 +161,10 @@ class CloudGrep:
         log_properties: List[str],
         json_output: bool,
     ) -> None:
-        """ Search Azure container for query """
+        """Search Azure container for query"""
         matching_keys = list(
             self.cloud.get_azure_objects(
-                account_name,
-                container_name,
-                prefix,
-                key_contains,
-                from_date,
-                end_date,
-                file_size
+                account_name, container_name, prefix, key_contains, from_date, end_date, file_size
             )
         )
         print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
@@ -191,7 +184,7 @@ class CloudGrep:
         self,
         google_bucket: str,
         query: List[str],
-        yara_rules,
+        yara_rules: Any,
         file_size: int,
         prefix: Optional[str],
         key_contains: Optional[str],
@@ -202,15 +195,7 @@ class CloudGrep:
         log_properties: List[str],
         json_output: bool,
     ) -> None:
-        matching_keys = list(
-            self.cloud.get_google_objects(
-                google_bucket,
-                prefix,
-                key_contains,
-                from_date,
-                end_date
-            )
-        )
+        matching_keys = list(self.cloud.get_google_objects(google_bucket, prefix, key_contains, from_date, end_date))
         print(f"Searching {len(matching_keys)} files in {google_bucket} for {query}...")
         self.cloud.download_from_google(
             google_bucket,
