@@ -1,6 +1,6 @@
 import boto3
 from datetime import datetime
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 import logging
 import yara  # type: ignore
 
@@ -11,10 +11,42 @@ class CloudGrep:
     def __init__(self) -> None:
         self.cloud = Cloud()
 
-    def load_queries(self, file: str) -> List[str]:
-        """Load in a list of queries from a file"""
-        with open(file, "r") as f:
+    def load_queries(self, file_path: str) -> List[str]:
+        with open(file_path, "r", encoding="utf-8") as f:
             return [line.strip() for line in f if line.strip()]
+
+    def list_files(
+        self,
+        bucket: Optional[str],
+        account_name: Optional[str],
+        container_name: Optional[str],
+        google_bucket: Optional[str],
+        prefix: Optional[str] = "",
+        key_contains: Optional[str] = None,
+        from_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        file_size: int = 100_000_000, # 100MB
+    ) -> Dict[str, List[Any]]:
+        """
+        Returns a dictionary of matching files for each cloud provider.
+
+        The returned dict has the following keys:
+          - "s3": a list of S3 object keys that match filters
+          - "azure": a list of Azure blob names that match filters
+          - "gcs": a list of tuples (blob name, blob) for Google Cloud Storage that match filters
+        """
+        files = {}
+        if bucket:
+            files["s3"] = list(self.cloud.get_objects(bucket, prefix, key_contains, from_date, end_date, file_size))
+        if account_name and container_name:
+            files["azure"] = list(
+                self.cloud.get_azure_objects(
+                    account_name, container_name, prefix, key_contains, from_date, end_date, file_size
+                )
+            )
+        if google_bucket:
+            files["gcs"] = [blob[0] for blob in self.cloud.get_google_objects(google_bucket, prefix, key_contains, from_date, end_date)]
+        return files
 
     def search(
         self,
@@ -22,11 +54,11 @@ class CloudGrep:
         account_name: Optional[str],
         container_name: Optional[str],
         google_bucket: Optional[str],
-        query: List[str],
+        query: Optional[List[str]],
         file: Optional[str],
         yara_file: Optional[str],
         file_size: int,
-        prefix: Optional[str] = None,
+        prefix: Optional[str] = "",
         key_contains: Optional[str] = None,
         from_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
@@ -36,174 +68,94 @@ class CloudGrep:
         log_properties: Optional[List[str]] = None,
         profile: Optional[str] = None,
         json_output: bool = False,
+        files: Optional[Dict[str, List[Any]]] = None,
     ) -> None:
-        """Search query/queries across cloud storage"""
+        """
+        Searches the contents of files matching the given queries.
 
-        # Load queries from a file if given
+        If the optional `files` parameter is provided (a dict with keys such as "s3", "azure", or "gcs")
+        then the search will use those file lists instead of applying the filters again.
+        """
         if not query and file:
-            logging.debug(f"Loading queries in from {file}")
+            logging.debug(f"Loading queries from {file}")
             query = self.load_queries(file)
+        if not query:
+            logging.error("No query provided. Exiting.")
+            return
 
-        # Compile optional Yara rules
         yara_rules = None
         if yara_file:
-            logging.debug(f"Loading yara rules from {yara_file}")
+            logging.debug(f"Compiling yara rules from {yara_file}")
             yara_rules = yara.compile(filepath=yara_file)
 
         if profile:
-            # Set the AWS credentials profile to use
             boto3.setup_default_session(profile_name=profile)
 
-        if log_type is not None:
-            if log_type == "cloudtrail":
+        if log_type:
+            if log_type.lower() == "cloudtrail":
                 log_format = "json"
                 log_properties = ["Records"]
-            elif log_type == "azure":
+            elif log_type.lower() == "azure":
                 log_format = "json"
                 log_properties = ["data"]
             else:
-                logging.error(f"Invalid log_type: '{log_type}'")
+                logging.error(f"Invalid log_type: {log_type}")
                 return
         if log_properties is None:
-            log_properties = []  # default
+            log_properties = []
 
-        # Search given cloud storage
         if bucket:
-            self._search_s3(
-                bucket=bucket,
-                query=query,
-                yara_rules=yara_rules,
-                file_size=file_size,
-                prefix=prefix,
-                key_contains=key_contains,
-                from_date=from_date,
-                end_date=end_date,
-                hide_filenames=hide_filenames,
-                log_format=log_format,
-                log_properties=log_properties,
-                json_output=json_output,
+            if files and "s3" in files:
+                matching_keys = files["s3"]
+            else:
+                matching_keys = list(
+                    self.cloud.get_objects(bucket, prefix, key_contains, from_date, end_date, file_size)
+                )
+            s3_client = boto3.client("s3")
+            region = s3_client.get_bucket_location(Bucket=bucket).get("LocationConstraint", "unknown")
+            logging.warning(f"Bucket region: {region}. (Search from the same region to avoid egress charges.)")
+            logging.warning(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
+            self.cloud.download_from_s3_multithread(
+                bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output
             )
 
         if account_name and container_name:
-            self._search_azure(
-                account_name=account_name,
-                container_name=container_name,
-                query=query,
-                yara_rules=yara_rules,
-                file_size=file_size,
-                prefix=prefix,
-                key_contains=key_contains,
-                from_date=from_date,
-                end_date=end_date,
-                hide_filenames=hide_filenames,
-                log_format=log_format,
-                log_properties=log_properties,
-                json_output=json_output,
+            if files and "azure" in files:
+                matching_keys = files["azure"]
+            else:
+                matching_keys = list(
+                    self.cloud.get_azure_objects(
+                        account_name, container_name, prefix, key_contains, from_date, end_date, file_size
+                    )
+                )
+            logging.info(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
+            self.cloud.download_from_azure(
+                account_name,
+                container_name,
+                matching_keys,
+                query,
+                hide_filenames,
+                yara_rules,
+                log_format,
+                log_properties,
+                json_output,
             )
 
         if google_bucket:
-            self._search_gcs(
-                google_bucket=google_bucket,
-                query=query,
-                yara_rules=yara_rules,
-                file_size=file_size,
-                prefix=prefix,
-                key_contains=key_contains,
-                from_date=from_date,
-                end_date=end_date,
-                hide_filenames=hide_filenames,
-                log_format=log_format,
-                log_properties=log_properties,
-                json_output=json_output,
+            if files and "gcs" in files:
+                matching_blobs = files["gcs"]
+            else:
+                matching_blobs = list(
+                    self.cloud.get_google_objects(google_bucket, prefix, key_contains, from_date, end_date)
+                )
+            logging.info(f"Searching {len(matching_blobs)} files in {google_bucket} for {query}...")
+            self.cloud.download_from_google(
+                google_bucket,
+                matching_blobs,
+                query,
+                hide_filenames,
+                yara_rules,
+                log_format,
+                log_properties,
+                json_output,
             )
-
-    def _search_s3(
-        self,
-        bucket: str,
-        query: List[str],
-        yara_rules: Any,
-        file_size: int,
-        prefix: Optional[str],
-        key_contains: Optional[str],
-        from_date: Optional[datetime],
-        end_date: Optional[datetime],
-        hide_filenames: bool,
-        log_format: Optional[str],
-        log_properties: List[str],
-        json_output: bool,
-    ) -> None:
-        """Search S3 bucket for query"""
-        matching_keys = list(self.cloud.get_objects(bucket, prefix, key_contains, from_date, end_date, file_size))
-        s3_client = boto3.client("s3")
-        region = s3_client.get_bucket_location(Bucket=bucket)
-        logging.warning(
-            f"Bucket is in region: {region.get('LocationConstraint', 'unknown')} : "
-            "Search from the same region to avoid egress charges."
-        )
-        logging.warning(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
-        self.cloud.download_from_s3_multithread(
-            bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output
-        )
-
-    def _search_azure(
-        self,
-        account_name: str,
-        container_name: str,
-        query: List[str],
-        yara_rules: Any,
-        file_size: int,
-        prefix: Optional[str],
-        key_contains: Optional[str],
-        from_date: Optional[datetime],
-        end_date: Optional[datetime],
-        hide_filenames: bool,
-        log_format: Optional[str],
-        log_properties: List[str],
-        json_output: bool,
-    ) -> None:
-        """Search Azure container for query"""
-        matching_keys = list(
-            self.cloud.get_azure_objects(
-                account_name, container_name, prefix, key_contains, from_date, end_date, file_size
-            )
-        )
-        print(f"Searching {len(matching_keys)} files in {account_name}/{container_name} for {query}...")
-        self.cloud.download_from_azure(
-            account_name,
-            container_name,
-            matching_keys,
-            query,
-            hide_filenames,
-            yara_rules,
-            log_format,
-            log_properties,
-            json_output,
-        )
-
-    def _search_gcs(
-        self,
-        google_bucket: str,
-        query: List[str],
-        yara_rules: Any,
-        file_size: int,
-        prefix: Optional[str],
-        key_contains: Optional[str],
-        from_date: Optional[datetime],
-        end_date: Optional[datetime],
-        hide_filenames: bool,
-        log_format: Optional[str],
-        log_properties: List[str],
-        json_output: bool,
-    ) -> None:
-        matching_keys = list(self.cloud.get_google_objects(google_bucket, prefix, key_contains, from_date, end_date))
-        print(f"Searching {len(matching_keys)} files in {google_bucket} for {query}...")
-        self.cloud.download_from_google(
-            google_bucket,
-            matching_keys,
-            query,
-            hide_filenames,
-            yara_rules,
-            log_format,
-            log_properties,
-            json_output,
-        )
