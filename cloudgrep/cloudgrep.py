@@ -45,7 +45,7 @@ class CloudGrep:
                 )
             )
         if google_bucket:
-            files["gcs"] = list(self.cloud.get_google_objects(google_bucket, prefix, key_contains, from_date, end_date))
+            files["gcs"] = [blob[0] for blob in self.cloud.get_google_objects(google_bucket, prefix, key_contains, from_date, end_date)]
         return files
 
     def search(
