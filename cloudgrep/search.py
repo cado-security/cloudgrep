@@ -1,19 +1,18 @@
-import tempfile
 import re
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Iterator, Iterable
 import logging
 import gzip
 import zipfile
-import os
 import json
 import csv
-
+import io
 
 class Search:
-    def get_all_strings_line(self, file_path: str) -> List[str]:
-        with open(file_path, "rb") as f:
-            content = f.read().decode("utf-8", errors="ignore")
-        return content.splitlines()
+    def get_all_strings_line(self, file_path: str) -> Iterator[str]:
+        """Yield lines from a file without loading into memory"""
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                yield line
 
     def print_match(self, match_info: dict, hide_filenames: bool, json_output: Optional[bool]) -> None:
         output = match_info.copy()
@@ -79,7 +78,7 @@ class Search:
     def search_line(
         self,
         key_name: str,
-        patterns: List[str],
+        compiled_patterns: List[re.Pattern],
         hide_filenames: bool,
         line: str,
         log_format: Optional[str],
@@ -88,13 +87,13 @@ class Search:
     ) -> bool:
         """Regex search of the line"""
         found = False
-        for pattern in patterns:
-            if re.search(pattern, line):
+        for regex in compiled_patterns:
+            if regex.search(line):
                 if log_format:
-                    self.search_logs(line, key_name, pattern, hide_filenames, log_format, log_properties, json_output)
+                    self.search_logs(line, key_name, regex.pattern, hide_filenames, log_format, log_properties, json_output)
                 else:
                     self.print_match(
-                        {"key_name": key_name, "query": pattern, "line": line}, hide_filenames, json_output
+                        {"key_name": key_name, "query": regex.pattern, "line": line}, hide_filenames, json_output
                     )
                 found = True
         return found
@@ -128,10 +127,12 @@ class Search:
         logging.info(f"Searching {file_name} for patterns: {patterns}")
         if yara_rules:
             return self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, json_output)
+        
+        compiled_patterns = [re.compile(p) for p in patterns]
 
-        def process_lines(lines: Any) -> bool:
+        def process_lines(lines: Iterable[str]) -> bool:
             return any(
-                self.search_line(key_name, patterns, hide_filenames, line, log_format, log_properties, json_output)
+                self.search_line(key_name, compiled_patterns, hide_filenames, line, log_format, log_properties, json_output)
                 for line in lines
             )
 
@@ -149,24 +150,23 @@ class Search:
         elif file_name.endswith(".zip"):
             matched_any = False
             try:
-                with tempfile.TemporaryDirectory() as tempdir:
-                    with zipfile.ZipFile(file_name, "r") as zf:
-                        zf.extractall(tempdir)
-                    for extracted in os.listdir(tempdir):
-                        extracted_path = os.path.join(tempdir, extracted)
-                        if not os.path.isfile(extracted_path):
+                with zipfile.ZipFile(file_name, "r") as zf:
+                    for zip_info in zf.infolist():
+                        if zip_info.is_dir():
                             continue
-                        try:
-                            with open(extracted_path, "r", encoding="utf-8", errors="ignore") as f:
+                        with zf.open(zip_info) as file_obj:
+                            # Wrap the binary stream as text
+                            with io.TextIOWrapper(file_obj, encoding="utf-8", errors="ignore") as f:
                                 if account_name:
-                                    data = json.load(f)
-                                    if process_lines(data):
-                                        matched_any = True
+                                    try:
+                                        data = json.load(f)
+                                        if process_lines(data):
+                                            matched_any = True
+                                    except Exception:
+                                        logging.exception(f"Error processing json in zip member: {zip_info.filename}")
                                 else:
                                     if process_lines(f):
                                         matched_any = True
-                        except Exception:
-                            logging.exception(f"Error processing extracted file: {extracted_path}")
                 return matched_any
             except Exception:
                 logging.exception(f"Error processing zip file: {file_name}")

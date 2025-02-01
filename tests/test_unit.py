@@ -403,7 +403,7 @@ class CloudGrepTests(unittest.TestCase):
         self.assertIn("google target", output, "Should match the google target text in the downloaded content")
 
     @mock_aws
-    def test_list_files_returns_pre_filtered_files(self):
+    def test_list_files_returns_pre_filtered_files(self) -> None:
         """
         Test that list_files() returns only the S3 objects that match
         the specified filters (e.g. key substring and non‑empty content).

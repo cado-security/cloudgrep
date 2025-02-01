@@ -12,7 +12,6 @@ from typing import Iterator, Optional, List, Any, Tuple
 import logging
 from cloudgrep.search import Search
 
-
 class Cloud:
     def __init__(self) -> None:
         self.search = Search()
@@ -21,13 +20,10 @@ class Cloud:
         """Use ThreadPoolExecutor to download every file
         Returns number of matched files"""
         total_matched = 0
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [executor.submit(worker_func, key) for key in files]
-            for fut in concurrent.futures.as_completed(futures):
-                try:
-                    total_matched += fut.result()
-                except Exception:
-                    logging.exception("Error in worker thread")
+        max_workers = 10 # limit cpu/memory pressure
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for result in executor.map(worker_func, files):
+                total_matched += result
         return total_matched
 
     def _download_to_temp(self) -> str:
