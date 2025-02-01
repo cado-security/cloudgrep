@@ -12,13 +12,14 @@ from typing import Iterator, Optional, List, Any, Tuple
 import logging
 from cloudgrep.search import Search
 
+
 class Cloud:
     def __init__(self) -> None:
         self.search = Search()
 
-    def _download_and_search_in_parallel(self, files: List[Any], worker_func) -> int:
-        """ Use ThreadPoolExecutor to download every file
-        Returns number of matched files """
+    def _download_and_search_in_parallel(self, files: List[Any], worker_func: Any) -> int:
+        """Use ThreadPoolExecutor to download every file
+        Returns number of matched files"""
         total_matched = 0
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(worker_func, key) for key in files]
@@ -30,7 +31,7 @@ class Cloud:
         return total_matched
 
     def _download_to_temp(self) -> str:
-        """ Return a temporary filename """
+        """Return a temporary filename"""
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             tmp.close()
             return tmp.name
@@ -46,7 +47,7 @@ class Cloud:
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
     ) -> int:
-        """ Download and search files from AWS S3"""
+        """Download and search files from AWS S3"""
         if log_properties is None:
             log_properties = []
         s3 = boto3.client("s3", config=botocore.config.Config(max_pool_connections=64))
@@ -83,7 +84,7 @@ class Cloud:
         log_properties: Optional[List[str]] = None,
         json_output: bool = False,
     ) -> int:
-        """Download and search files from Azure Storage """
+        """Download and search files from Azure Storage"""
         if log_properties is None:
             log_properties = []
         default_credential = DefaultAzureCredential()

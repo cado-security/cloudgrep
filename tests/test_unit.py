@@ -401,3 +401,70 @@ class CloudGrepTests(unittest.TestCase):
             output = fake_out.getvalue().strip()
 
         self.assertIn("google target", output, "Should match the google target text in the downloaded content")
+
+    @mock_aws
+    def test_list_files_returns_pre_filtered_files(self):
+        """
+        Test that list_files() returns only the S3 objects that match
+        the specified filters (e.g. key substring and non‑empty content).
+        """
+        bucket_name = "list-files-test-bucket"
+        # Create a fake S3 bucket
+        s3_resource = boto3.resource("s3", region_name="us-east-1")
+        s3_resource.create_bucket(Bucket=bucket_name)
+        s3_client = boto3.client("s3", region_name="us-east-1")
+        
+        # Upload several objects:
+        # - Two objects that match
+        s3_client.put_object(Bucket=bucket_name, Key="log_file1.txt", Body=b"dummy content")
+        s3_client.put_object(Bucket=bucket_name, Key="log_file2.txt", Body=b"dummy content")
+        # Onne that doesnt match the key_contains filter
+        s3_client.put_object(Bucket=bucket_name, Key="not_a_thing.txt", Body=b"dummy content")
+        # One that doesnt match the file_size filter
+        s3_client.put_object(Bucket=bucket_name, Key="log_empty.txt", Body=b"")
+
+        # Call list files
+        cg = CloudGrep()
+        result = cg.list_files(
+            bucket=bucket_name,
+            account_name=None,
+            container_name=None,
+            google_bucket=None,
+            prefix="",
+            key_contains="log",
+            from_date=None,
+            end_date=None,
+            file_size=1000000  # 1 MB
+        )
+
+        # Assert only the matching files are returned
+        self.assertIn("s3", result)
+        expected_keys = {"log_file1.txt", "log_file2.txt"}
+        self.assertEqual(set(result["s3"]), expected_keys)
+
+        # Now search the contents of the files and assert they hit
+        for key in expected_keys:
+            with patch("sys.stdout", new=StringIO()) as fake_out:
+                cg.search(
+                    bucket=bucket_name,
+                    account_name=None,
+                    container_name=None,
+                    google_bucket=None,
+                    query=["dummy content"],
+                    file=None,
+                    yara_file=None,
+                    file_size=1000000,
+                    prefix="",
+                    key_contains=key,
+                    from_date=None,
+                    end_date=None,
+                    hide_filenames=False,
+                    log_type=None,
+                    log_format=None,
+                    log_properties=[],
+                    profile=None,
+                    json_output=False,
+                    files=result, # Pass the pre-filtered files from list_files
+                )
+                output = fake_out.getvalue().strip()
+            self.assertIn("log_file1.txt", output)
