@@ -166,14 +166,25 @@ class Cloud:
         from_date: Optional[datetime],
         end_date: Optional[datetime],
         file_size: int,
+        max_matches: int = 1000000 # generous default
     ) -> Iterator[str]:
-        """Yield objects that match filter"""
-        s3 = boto3.client("s3")
-        paginator = s3.get_paginator("list_objects_v2")
-        for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+        """Yield a maximum of max_matches objects that match filter"""
+        # Reuse the S3 client if already created; otherwise, create one
+        if not hasattr(self, "s3_client"):
+            self.s3_client = boto3.client("s3")
+        paginator = self.s3_client.get_paginator("list_objects_v2")
+        count = 0
+        for page in paginator.paginate(
+            Bucket=bucket,
+            Prefix=prefix,
+            PaginationConfig={'PageSize': 1000}
+        ):
             for obj in page.get("Contents", []):
                 if self.filter_object(obj, key_contains, from_date, end_date, file_size):
                     yield obj.get("Key")
+                    count += 1
+                    if count >= max_matches:
+                        return
 
     def get_azure_objects(
         self,
