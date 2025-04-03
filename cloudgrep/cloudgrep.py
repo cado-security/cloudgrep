@@ -79,7 +79,6 @@ class CloudGrep:
         If the optional `files` parameter is provided (a dict with keys such as "s3", "azure", or "gcs")
         then the search will use those file lists instead of applying the filters again.
         """
-        logging.info(f"Convert Date: {convert_date}")
         if not query and file:
             logging.debug(f"Loading queries from {file}")
             query = self.load_queries(file)

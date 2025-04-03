@@ -63,7 +63,7 @@ def main() -> None:
 
     # Configure logging
     if args.debug:
-        logging.basicConfig(format="[%(asctime)s] [%(levelname)s] %(message)s", level=logging.INFO)
+        logging.basicConfig(format="[%(asctime)s] [%(levelname)s] %(message)s", level=logging.DEBUG)
     else:
         logging.basicConfig(format="[%(asctime)s] %(message)s", level=logging.WARNING)
         logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
