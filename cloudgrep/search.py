@@ -30,7 +30,16 @@ class Search:
             print(f"{output.get('key_name', '')}: {line}" if not hide_filenames else line)
 
     def parse_logs(self, line: str, log_format: Optional[str]) -> Any:
-        if log_format == "json":
+        if log_format == "jsonl":
+            try:
+                # JSON Lines format (each line is a separate JSON object)
+                # This is a common format for logs, especially in cloud environments
+                # where each log entry is a separate line.
+                line_split = line.strip().split("\n")
+                return line_split
+            except json.JSONDecodeError as e:
+                logging.error(f"JSON decode error in line: {line} ({e})")
+        elif log_format == "json":
             try:
                 return json.loads(line)
             except json.JSONDecodeError as e:
@@ -84,13 +93,14 @@ class Search:
         log_format: Optional[str],
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
+        convert_date: Optional[bool] = False,
     ) -> bool:
         """Regex search of the line"""
         found = False
         for regex in compiled_patterns:
             if regex.search(line):
                 if log_format:
-                    self.search_logs(line, key_name, regex.pattern, hide_filenames, log_format, log_properties, json_output)
+                    self.search_logs(line, key_name, regex.pattern, hide_filenames, log_format, log_properties, json_output, convert_date)
                 else:
                     self.print_match(
                         {"key_name": key_name, "query": regex.pattern, "line": line}, hide_filenames, json_output
@@ -122,6 +132,8 @@ class Search:
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
         account_name: Optional[str] = None,
+        convert_date: Optional[bool] = False,
+        og_name: Optional[str] = None,
     ) -> bool:
         """Regex search of the file line by line"""
         logging.info(f"Searching {file_name} for patterns: {patterns}")
@@ -132,11 +144,10 @@ class Search:
 
         def process_lines(lines: Iterable[str]) -> bool:
             return any(
-                self.search_line(key_name, compiled_patterns, hide_filenames, line, log_format, log_properties, json_output)
+                self.search_line(key_name, compiled_patterns, hide_filenames, line, log_format, log_properties, json_output, convert_date)
                 for line in lines
             )
-
-        if file_name.endswith(".gz"):
+        if file_name.endswith(".gz") or og_name.endswith(".gz"):
             try:
                 with gzip.open(file_name, "rt", encoding="utf-8", errors="ignore") as f:
                     if account_name:
@@ -147,7 +158,7 @@ class Search:
             except Exception:
                 logging.exception(f"Error processing gzip file: {file_name}")
                 return False
-        elif file_name.endswith(".zip"):
+        elif file_name.endswith(".zip") or og_name.endswith(".zip"):
             matched_any = False
             try:
                 with zipfile.ZipFile(file_name, "r") as zf:

@@ -46,8 +46,13 @@ def main() -> None:
         "-lp", "--log_properties", type=list_of_strings, help="Comma-separated list of log properties to extract"
     )
     parser.add_argument("-jo", "--json_output", action="store_true", help="Output results in JSON format")
+    parser.add_argument(
+        "-cd", "--convert_date", action="store_true", help="Convert date to ISO format (YYYY-MM-DDTHH:MM:SS)"
+    )
+    parser.add_argument(
+        "-og", "--use_og_name", action="store_true", help="Decide if you want to use original key name or tmporary name for uncompress files"
+    )
     args = parser.parse_args()
-
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
@@ -58,7 +63,7 @@ def main() -> None:
 
     # Configure logging
     if args.debug:
-        logging.basicConfig(format="[%(asctime)s] [%(levelname)s] %(message)s", level=logging.DEBUG)
+        logging.basicConfig(format="[%(asctime)s] [%(levelname)s] %(message)s", level=logging.INFO)
     else:
         logging.basicConfig(format="[%(asctime)s] %(message)s", level=logging.WARNING)
         logging.getLogger("urllib3.connectionpool").setLevel(logging.ERROR)
@@ -82,6 +87,8 @@ def main() -> None:
         log_properties=args.log_properties,
         profile=args.profile,
         json_output=args.json_output,
+        convert_date=args.convert_date,
+        use_og_name=args.use_og_name,
     )
 
 
