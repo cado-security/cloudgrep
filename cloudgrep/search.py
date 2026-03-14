@@ -74,6 +74,7 @@ class Search:
         log_format: Optional[str] = None,
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
+        convert_date: Optional[bool] = False,
     ) -> None:
         """Search log records in parsed logs"""
         parsed = self.parse_logs(line, log_format)
@@ -137,6 +138,8 @@ class Search:
     ) -> bool:
         """Regex search of the file line by line"""
         logging.info(f"Searching {file_name} for patterns: {patterns}")
+        if og_name is None:
+            og_name = file_name
         if yara_rules:
             return self.yara_scan_file(file_name, key_name, hide_filenames, yara_rules, json_output)
         

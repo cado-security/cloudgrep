@@ -6,19 +6,29 @@ python3 -m unittest discover tests
 import unittest
 import os
 import boto3
-from google.cloud import storage  # type: ignore
-import timeout_decorator
+from typing import List, BinaryIO, Callable, Any
+try:
+    import timeout_decorator  # type: ignore[import-not-found]
+except Exception:  # pragma: no cover - optional test dependency
+    class _TimeoutDecoratorStub:
+        @staticmethod
+        def timeout(_seconds: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+            def _decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+                return func
+
+            return _decorator
+
+    timeout_decorator = _TimeoutDecoratorStub()
 from moto import mock_aws
 from datetime import datetime
 from unittest.mock import patch, MagicMock
 import yara  # type: ignore
 from io import StringIO
-from typing import List, BinaryIO
 import json
 import sys
 import csv
 
-from cloudgrep.cloud import Cloud
+from cloudgrep.cloud import Cloud, storage
 from cloudgrep.search import Search
 from cloudgrep.cloudgrep import CloudGrep
 

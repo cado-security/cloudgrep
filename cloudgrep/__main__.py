@@ -2,7 +2,7 @@ import argparse
 import logging
 import sys
 from typing import List, Optional
-import dateutil.parser
+import dateutil.parser  # type: ignore[import-untyped]
 import datetime
 
 from cloudgrep.cloudgrep import CloudGrep
