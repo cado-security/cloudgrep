@@ -6,6 +6,7 @@ python3 -m unittest discover tests
 import unittest
 import os
 import boto3
+from typing import List, BinaryIO, Callable, Any
 try:
     import timeout_decorator  # type: ignore[import-not-found]
 except Exception:  # pragma: no cover - optional test dependency
@@ -23,7 +24,6 @@ from datetime import datetime
 from unittest.mock import patch, MagicMock
 import yara  # type: ignore
 from io import StringIO
-from typing import List, BinaryIO, Callable, Any
 import json
 import sys
 import csv
