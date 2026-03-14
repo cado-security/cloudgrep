@@ -11,7 +11,7 @@ import tempfile
 from typing import Iterator, Optional, List, Any, Tuple
 import logging
 from cloudgrep.search import Search
-
+from pytz import timezone
 class Cloud:
     def __init__(self) -> None:
         self.search = Search()
@@ -42,6 +42,8 @@ class Cloud:
         log_format: Optional[str] = None,
         log_properties: List[str] = [],
         json_output: Optional[bool] = False,
+        convert_date: bool = False,
+        use_og_name : bool = False
     ) -> int:
         """Download and search files from AWS S3"""
         if log_properties is None:
@@ -53,8 +55,9 @@ class Cloud:
             try:
                 logging.info(f"Downloading s3://{bucket}/{key} to {tmp_name}")
                 s3.download_file(bucket, key, tmp_name)
+                og_name = key if use_og_name else tmp_name
                 matched = self.search.search_file(
-                    tmp_name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                    tmp_name, key, query, hide_filenames, yara_rules, log_format, log_properties, json_output, convert_date=convert_date, og_name=og_name
                 )
                 return 1 if matched else 0
             except Exception:
@@ -166,7 +169,8 @@ class Cloud:
         from_date: Optional[datetime],
         end_date: Optional[datetime],
         file_size: int,
-        max_matches: int = 1000000 # generous default
+        max_matches: int = 1000000, # generous default
+        convert_date: bool = False,
     ) -> Iterator[str]:
         """Yield a maximum of max_matches objects that match filter"""
         # Reuse the S3 client if already created; otherwise, create one
@@ -180,7 +184,7 @@ class Cloud:
             PaginationConfig={'PageSize': 1000}
         ):
             for obj in page.get("Contents", []):
-                if self.filter_object(obj, key_contains, from_date, end_date, file_size):
+                if self.filter_object(obj, key_contains, from_date, end_date, file_size, convert_date=convert_date):
                     yield obj.get("Key")
                     count += 1
                     if count >= max_matches:
@@ -227,9 +231,17 @@ class Cloud:
         from_date: Optional[datetime],
         to_date: Optional[datetime],
         file_size: int,
+        convert_date: bool = False,
     ) -> bool:
         """Filter an S3 object based on modification date, size, and key substring"""
         last_modified = obj.get("LastModified")
+        # Fix error : "TypeError: can't compare offset-naive and offset-aware datetimes"
+        if convert_date:
+            from_date = from_date.astimezone(timezone("UTC")) if from_date else None
+            to_date = to_date.astimezone(timezone("UTC")) if to_date else None
+            # Convert last_modified to UTC if it's not already
+            if isinstance(last_modified, datetime):
+                last_modified = last_modified.astimezone(timezone("UTC"))
         if last_modified:
             if from_date and last_modified < from_date:
                 return False

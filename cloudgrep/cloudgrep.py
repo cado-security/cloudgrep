@@ -26,6 +26,7 @@ class CloudGrep:
         from_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         file_size: int = 100_000_000, # 100MB
+        convert_date: Optional[bool] = False,
     ) -> Dict[str, List[Any]]:
         """
         Returns a dictionary of matching files for each cloud provider.
@@ -37,7 +38,7 @@ class CloudGrep:
         """
         files = {}
         if bucket:
-            files["s3"] = list(self.cloud.get_objects(bucket, prefix, key_contains, from_date, end_date, file_size))
+            files["s3"] = list(self.cloud.get_objects(bucket, prefix, key_contains, from_date, end_date, file_size, convert_date=convert_date))
         if account_name and container_name:
             files["azure"] = list(
                 self.cloud.get_azure_objects(
@@ -69,6 +70,8 @@ class CloudGrep:
         profile: Optional[str] = None,
         json_output: bool = False,
         files: Optional[Dict[str, List[Any]]] = None,
+        convert_date: Optional[bool] = False,
+        use_og_name: Optional[bool] = False,
     ) -> None:
         """
         Searches the contents of files matching the given queries.
@@ -98,6 +101,9 @@ class CloudGrep:
             elif log_type.lower() == "azure":
                 log_format = "json"
                 log_properties = ["data"]
+            elif log_type.lower() == "waf":
+                log_format = "jsonl"
+                log_properties = None
             else:
                 logging.error(f"Invalid log_type: {log_type}")
                 return
@@ -109,14 +115,14 @@ class CloudGrep:
                 matching_keys = files["s3"]
             else:
                 matching_keys = list(
-                    self.cloud.get_objects(bucket, prefix, key_contains, from_date, end_date, file_size)
+                    self.cloud.get_objects(bucket, prefix, key_contains, from_date, end_date, file_size, convert_date=convert_date)
                 )
             s3_client = boto3.client("s3")
             region = s3_client.get_bucket_location(Bucket=bucket).get("LocationConstraint", "unknown")
             logging.warning(f"Bucket region: {region}. (Search from the same region to avoid egress charges.)")
             logging.warning(f"Searching {len(matching_keys)} files in {bucket} for {query}...")
             self.cloud.download_from_s3_multithread(
-                bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output
+                bucket, matching_keys, query, hide_filenames, yara_rules, log_format, log_properties, json_output, convert_date=convert_date, use_og_name=use_og_name
             )
 
         if account_name and container_name:
