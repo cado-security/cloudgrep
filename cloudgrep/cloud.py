@@ -2,10 +2,14 @@ import boto3
 import os
 from typing import Iterator, Optional, List, Any, Tuple
 
+_AzureBlobServiceClient: Any
+_AzureDefaultAzureCredential: Any
+_AzureResourceNotFoundError: Any
+
 try:
-    from azure.storage.blob import BlobServiceClient as _AzureBlobServiceClient  # type: ignore[import-not-found]
-    from azure.identity import DefaultAzureCredential as _AzureDefaultAzureCredential  # type: ignore[import-not-found]
-    from azure.core.exceptions import (  # type: ignore[import-not-found]
+    from azure.storage.blob import BlobServiceClient as _AzureBlobServiceClient  # type: ignore[import-not-found,no-redef]
+    from azure.identity import DefaultAzureCredential as _AzureDefaultAzureCredential  # type: ignore[import-not-found,no-redef]
+    from azure.core.exceptions import (  # type: ignore[import-not-found,no-redef]
         ResourceNotFoundError as _AzureResourceNotFoundError,
     )
 except Exception:  # pragma: no cover - optional dependency
