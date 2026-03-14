@@ -1,28 +1,30 @@
 import boto3
 import os
-try:
-    from azure.storage.blob import BlobServiceClient
-    from azure.identity import DefaultAzureCredential
-    from azure.core.exceptions import ResourceNotFoundError
-except Exception:  # pragma: no cover - optional dependency
-    BlobServiceClient = None
-    DefaultAzureCredential = None
+from typing import Iterator, Optional, List, Any, Tuple
 
-    class ResourceNotFoundError(Exception):
-        pass
 try:
-    from google.cloud import storage  # type: ignore
+    from azure.storage.blob import BlobServiceClient as _AzureBlobServiceClient  # type: ignore[import-not-found]
+    from azure.identity import DefaultAzureCredential as _AzureDefaultAzureCredential  # type: ignore[import-not-found]
+    from azure.core.exceptions import (  # type: ignore[import-not-found]
+        ResourceNotFoundError as _AzureResourceNotFoundError,
+    )
 except Exception:  # pragma: no cover - optional dependency
-    storage = None
+    _AzureBlobServiceClient = None
+    _AzureDefaultAzureCredential = None
+    _AzureResourceNotFoundError = Exception
+
+try:
+    from google.cloud import storage as _gcs_storage  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    _gcs_storage = None
 
 from datetime import datetime
 import botocore
 import concurrent.futures
 import tempfile
-from typing import Iterator, Optional, List, Any, Tuple
 import logging
 from cloudgrep.search import Search
-from pytz import timezone
+from pytz import timezone  # type: ignore[import-untyped]
 
 
 class _GCSBlobStub:
@@ -41,22 +43,28 @@ class _GCSStorageStub:
             raise ImportError("google-cloud-storage is required for GCS operations")
 
 
-if storage is None:
-    storage = _GCSStorageStub()
+class _AzureBlobServiceClientStub:
+    @classmethod
+    def from_connection_string(cls, *_: Any, **__: Any) -> "_AzureBlobServiceClientStub":
+        raise ImportError("azure-storage-blob is required for Azure operations")
 
 
-if BlobServiceClient is None:
-    class BlobServiceClient:  # type: ignore[no-redef]
-        @classmethod
-        def from_connection_string(cls, *_: Any, **__: Any) -> "BlobServiceClient":
-            raise ImportError("azure-storage-blob is required for Azure operations")
+class _AzureDefaultAzureCredentialStub:
+    def __init__(self, *_: Any, **__: Any) -> None:
+        # Allow tests to mock Azure clients without the dependency installed.
+        pass
 
 
-if DefaultAzureCredential is None:
-    class DefaultAzureCredential:  # type: ignore[no-redef]
-        def __init__(self, *_: Any, **__: Any) -> None:
-            # Allow tests to mock Azure clients without the dependency installed.
-            pass
+storage: Any = _gcs_storage if _gcs_storage is not None else _GCSStorageStub()
+BlobServiceClient: Any = (
+    _AzureBlobServiceClient if _AzureBlobServiceClient is not None else _AzureBlobServiceClientStub
+)
+DefaultAzureCredential: Any = (
+    _AzureDefaultAzureCredential if _AzureDefaultAzureCredential is not None else _AzureDefaultAzureCredentialStub
+)
+ResourceNotFoundError = _AzureResourceNotFoundError
+
+
 class Cloud:
     def __init__(self) -> None:
         self.search = Search()

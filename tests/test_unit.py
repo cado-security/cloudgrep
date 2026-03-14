@@ -7,12 +7,12 @@ import unittest
 import os
 import boto3
 try:
-    import timeout_decorator
+    import timeout_decorator  # type: ignore[import-not-found]
 except Exception:  # pragma: no cover - optional test dependency
     class _TimeoutDecoratorStub:
         @staticmethod
-        def timeout(_seconds):
-            def _decorator(func):
+        def timeout(_seconds: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+            def _decorator(func: Callable[..., Any]) -> Callable[..., Any]:
                 return func
 
             return _decorator
@@ -23,7 +23,7 @@ from datetime import datetime
 from unittest.mock import patch, MagicMock
 import yara  # type: ignore
 from io import StringIO
-from typing import List, BinaryIO
+from typing import List, BinaryIO, Callable, Any
 import json
 import sys
 import csv
