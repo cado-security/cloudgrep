@@ -6,8 +6,18 @@ python3 -m unittest discover tests
 import unittest
 import os
 import boto3
-from google.cloud import storage  # type: ignore
-import timeout_decorator
+try:
+    import timeout_decorator
+except Exception:  # pragma: no cover - optional test dependency
+    class _TimeoutDecoratorStub:
+        @staticmethod
+        def timeout(_seconds):
+            def _decorator(func):
+                return func
+
+            return _decorator
+
+    timeout_decorator = _TimeoutDecoratorStub()
 from moto import mock_aws
 from datetime import datetime
 from unittest.mock import patch, MagicMock
@@ -18,7 +28,7 @@ import json
 import sys
 import csv
 
-from cloudgrep.cloud import Cloud
+from cloudgrep.cloud import Cloud, storage
 from cloudgrep.search import Search
 from cloudgrep.cloudgrep import CloudGrep
 

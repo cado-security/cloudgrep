@@ -1,9 +1,20 @@
 import boto3
 import os
-from azure.storage.blob import BlobServiceClient
-from azure.identity import DefaultAzureCredential
-from azure.core.exceptions import ResourceNotFoundError
-from google.cloud import storage  # type: ignore
+try:
+    from azure.storage.blob import BlobServiceClient
+    from azure.identity import DefaultAzureCredential
+    from azure.core.exceptions import ResourceNotFoundError
+except Exception:  # pragma: no cover - optional dependency
+    BlobServiceClient = None
+    DefaultAzureCredential = None
+
+    class ResourceNotFoundError(Exception):
+        pass
+try:
+    from google.cloud import storage  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    storage = None
+
 from datetime import datetime
 import botocore
 import concurrent.futures
@@ -12,6 +23,40 @@ from typing import Iterator, Optional, List, Any, Tuple
 import logging
 from cloudgrep.search import Search
 from pytz import timezone
+
+
+class _GCSBlobStub:
+    def __init__(self, name: str, bucket: Optional[str] = None, updated: Optional[datetime] = None) -> None:
+        self.name = name
+        self.bucket = bucket
+        self.updated = updated
+
+
+class _GCSStorageStub:
+    class blob:
+        Blob = _GCSBlobStub
+
+    class Client:
+        def __init__(self, *_: Any, **__: Any) -> None:
+            raise ImportError("google-cloud-storage is required for GCS operations")
+
+
+if storage is None:
+    storage = _GCSStorageStub()
+
+
+if BlobServiceClient is None:
+    class BlobServiceClient:  # type: ignore[no-redef]
+        @classmethod
+        def from_connection_string(cls, *_: Any, **__: Any) -> "BlobServiceClient":
+            raise ImportError("azure-storage-blob is required for Azure operations")
+
+
+if DefaultAzureCredential is None:
+    class DefaultAzureCredential:  # type: ignore[no-redef]
+        def __init__(self, *_: Any, **__: Any) -> None:
+            # Allow tests to mock Azure clients without the dependency installed.
+            pass
 class Cloud:
     def __init__(self) -> None:
         self.search = Search()
